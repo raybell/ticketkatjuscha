@@ -70,12 +70,12 @@ public class CodeGenerator {
 	}
 	
 	private Ticket generateNewCode(HashMap<String, CodeData> codeList){
-		long newCode = Math.round(Math.random() * (MAX_CODE_DIGITS * 1000));
-		if (codeList.containsKey("" + newCode)){
+		String newCode = String.format("%0" + MAX_CODE_DIGITS + "d", Math.round(Math.random() * (MAX_CODE_DIGITS * 1000)));
+		if (codeList.containsKey(newCode)){
 			//we already know this code, try to create a new one
 			return generateNewCode(codeList);
 		}else{
-			return new Ticket(String.format("%0" + MAX_CODE_DIGITS + "d", newCode), new CodeData(generateCheckCode(), owner));
+			return new Ticket(newCode, new CodeData(generateCheckCode(), owner));
 		}
 	}
 	
