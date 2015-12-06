@@ -106,7 +106,7 @@ public class TicketExpert {
 			}
 			
 			//move tmp file to expected output directory
-			File ticketFile = new File(TICKET_GEN_DIR + File.separator + makeCompatibleFileName(TICKET_NAME_PREFIX + "_" + newCode + "_" + codeData.getName()));
+			File ticketFile = new File(TICKET_GEN_DIR + File.separator + makeCompatibleFileName(TICKET_NAME_PREFIX + "_" + newCode + "_" + codeData.getName()) + TICKET_NAME_SUFFIX);
 			tmpFile.renameTo(ticketFile);
 		}
 		
@@ -133,7 +133,7 @@ public class TicketExpert {
 	}
 	
 	private String makeCompatibleFileName(String filePartName){
-		return filePartName.replaceAll("\\W+", "");
+		return filePartName.replaceAll("\\W+", "_");
 	}
 	
 	private void archiveOldTickets(){
