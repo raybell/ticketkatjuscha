@@ -14,6 +14,14 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
+    
+    <repositories>
+        <repository>
+            <id>mvnrepository.com</id>
+            <name>mvnrepository.com</name>
+            <url>http://http://mvnrepository.com/artifact/</url>
+        </repository>
+    </repositories>
 
 	<build>
 		<plugins>
@@ -77,5 +85,10 @@
 			<artifactId>poi-ooxml</artifactId>
 			<version>3.12</version>
 		</dependency>
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>itextpdf</artifactId>
+            <version>5.5.8</version>
+        </dependency>
 	</dependencies>
 </project>

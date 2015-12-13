@@ -12,17 +12,21 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
+import com.itextpdf.text.DocumentException;
+
 import the.dancing.company.ticketkatjuscha.data.CodeData;
 
 public class TicketExpert {
 	
 	private static final String TICKET_GEN_DIR = "latest";
 	private static final String TICKET_ARCHIVE_DIR = "archive";
+	private static final String TICKET_TEMPLATE_DIR = "template";
 	private static final String TICKET_NAME_PREFIX = "ticket";
 	private static final String TICKET_NAME_SUFFIX = ".pdf";
 	
 	private int amountOfTickets;
 	private String ownerName;
+	private TicketGenerator ticketGenerator;
 	
 	private static Options options = new Options();
 	static{
@@ -64,6 +68,7 @@ public class TicketExpert {
 	public TicketExpert(int amountOfTickets, String ownerName){
 		this.amountOfTickets = amountOfTickets;
 		this.ownerName = ownerName;
+		this.ticketGenerator = new PDFTicketGenerator(TICKET_TEMPLATE_DIR);
 	}
 	
 	public void process(){
@@ -91,10 +96,12 @@ public class TicketExpert {
 			try {
 				tmpFile = File.createTempFile(TICKET_NAME_PREFIX, TICKET_NAME_SUFFIX);
 				outputStream = new FileOutputStream(tmpFile);
-				new DummyTicketGenerator().generate(newCode, newCodes.get(newCode).getCheckCode(), newCodes.get(newCode).getName(), outputStream);
+				this.ticketGenerator.generate(newCode, newCodes.get(newCode).getCheckCode(), newCodes.get(newCode).getName(), outputStream);
 			} catch (IOException e) {
 				terminateWithError("Problääääm. Seems the ticket generator did not find the right byte code sequence.", e, true);
-			} finally{
+			} catch (DocumentException e) {
+                terminateWithError("Problääääm. Cannot create PDF.", e, true);
+            } finally{
 				if (outputStream != null){
 					try {
 						outputStream.flush();
