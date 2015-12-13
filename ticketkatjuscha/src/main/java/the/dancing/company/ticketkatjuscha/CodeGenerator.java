@@ -3,6 +3,8 @@ package the.dancing.company.ticketkatjuscha;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -19,12 +21,8 @@ import the.dancing.company.ticketkatjuscha.data.CodeData;
 import the.dancing.company.ticketkatjuscha.data.Ticket;
 
 public class CodeGenerator {
-
 	private static final String CODELIST_NAME = "codelist.xlsx";
-	private static final String CODELIST_NAME_BACKUP = CODELIST_NAME + ".bak";
 	private static final String CODELIST_SHEET = "Ticketcodes";
-	private static final int MAX_CODE_DIGITS = 4;
-	private static final int MAX_CHECKCODE_DIGITS = 3;
 	
 	private String owner;
 	private Map<String, CodeData> codeList;
@@ -71,7 +69,8 @@ public class CodeGenerator {
 	}
 	
 	private Ticket generateNewCode(){
-		String newCode = String.format("%0" + MAX_CODE_DIGITS + "d", Math.round(Math.random() * (MAX_CODE_DIGITS * 1000)));
+		int maxCodeDigits = PropertyHandler.getInstance().getPropertyInt(PropertyHandler.PROP_MAX_CODE_DIGITS);
+		String newCode = String.format("%0" +  maxCodeDigits + "d", Math.round(Math.random() * (maxCodeDigits * 1000)));
 		if (codeList.containsKey(newCode)){
 			//we already know this code, try to create a new one
 			return generateNewCode();
@@ -81,8 +80,9 @@ public class CodeGenerator {
 	}
 	
 	private String generateCheckCode(){
+		int maxCheckcodeDigits = PropertyHandler.getInstance().getPropertyInt(PropertyHandler.PROP_MAX_CHECKCODE_DIGITS);
 		StringBuilder checkCode = new StringBuilder();
-		for (int i = 0; i < MAX_CHECKCODE_DIGITS; i++) {
+		for (int i = 0; i < maxCheckcodeDigits; i++) {
 			checkCode.append((char)(Math.round(Math.random() * 100) % 26 + 65));	//big letters only
 		}
 		return checkCode.toString();
@@ -134,7 +134,8 @@ public class CodeGenerator {
 	private void backupCurrentCodelist(){
 		File codeListFile = new File(CODELIST_NAME);
 		if (codeListFile.exists()){
-			File codeListBackupFile = new File(CODELIST_NAME_BACKUP);
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd-HHmmss");
+			File codeListBackupFile = new File(CODELIST_NAME + "." + sdf.format(new Date()) + ".bak");
 			//delete old backup
 			if (codeListBackupFile.exists()){
 				codeListBackupFile.delete();
