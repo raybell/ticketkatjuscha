@@ -134,8 +134,11 @@ public class CodeGenerator {
 	private void backupCurrentCodelist(){
 		File codeListFile = new File(CODELIST_NAME);
 		if (codeListFile.exists()){
+			//make backup dir
+			new File(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_CODELIST_BACKUP_DIR) + File.separator).mkdirs();
+			//make backup
 			SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd-HHmmss");
-			File codeListBackupFile = new File(CODELIST_NAME + "." + sdf.format(new Date()) + ".bak");
+			File codeListBackupFile = new File(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_CODELIST_BACKUP_DIR) + File.separator + CODELIST_NAME + "." + sdf.format(new Date()) + ".bak");
 			//delete old backup
 			if (codeListBackupFile.exists()){
 				codeListBackupFile.delete();

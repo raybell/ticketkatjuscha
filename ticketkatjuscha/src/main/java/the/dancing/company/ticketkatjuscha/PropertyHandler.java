@@ -12,6 +12,7 @@ public class PropertyHandler {
 	public static final String PROP_TICKET_GEN_DIR = "ticketGenerationDir";
 	public static final String PROP_TICKET_ARCHIVE_DIR = "ticketArchiveDir";
 	public static final String PROP_TICKET_TEMPLATE_FILE = "ticketTemplateFile";
+	public static final String PROP_CODELIST_BACKUP_DIR = "codelistBackupDir";
 	public static final String PROP_MAX_CODE_DIGITS = "maxCodeDigits";
 	public static final String PROP_MAX_CHECKCODE_DIGITS = "maxCheckcodeDigits";
 	
@@ -22,7 +23,8 @@ public class PropertyHandler {
 		{PROP_MAX_CHECKCODE_DIGITS, "3"},
 		{PROP_TICKET_GEN_DIR, "latest"},
 		{PROP_TICKET_ARCHIVE_DIR, "archive"},
-		{PROP_TICKET_TEMPLATE_FILE, "template/template.pdf"}
+		{PROP_TICKET_TEMPLATE_FILE, "template/template.pdf"},
+		{PROP_CODELIST_BACKUP_DIR, "backup"}
 	};
 	
 	private static final String PROP_FILENAME = "katjuscha.properties";
