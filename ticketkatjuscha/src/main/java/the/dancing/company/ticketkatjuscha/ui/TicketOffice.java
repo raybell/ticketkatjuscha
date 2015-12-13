@@ -49,13 +49,15 @@ public class TicketOffice extends JFrame{
 					showErrorDialog("Ich glaub du willst mit mir spielen. Gib mir eine Zahl, nicht zu gross, nicht zu klein, irgendwas dazwischen.");
 					return;
 				}
-				new TicketExpert(ticketAmount, tfTicketOwner.getText()).process(new ITicketProcessFailed() {
+				if (new TicketExpert(ticketAmount, tfTicketOwner.getText()).process(new ITicketProcessFailed() {
 					@Override
-					public void handleFailedState(Exception cause) {
-						showErrorDialog("Huiuiuiui sagt die UI, da ging wohl was in die Hose: \n\n" + cause.toString() + "\n\nMehr auf der Konsole...");	
+					public boolean handleFailedState(Exception cause) {
+						showErrorDialog("Huiuiuiui sagt die UI, da ging wohl was in die Hose: \n\n" + cause.toString() + "\n\nMehr auf der Konsole...");
+						return false;
 					}
-				});
-				showInfoDialog("Yeah!!!", "We rocked the office.");
+				})){
+					showInfoDialog("Yeah!!!", "We rocked the office.");
+				}
 			}
 		});
 

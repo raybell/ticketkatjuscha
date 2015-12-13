@@ -11,15 +11,18 @@ public class PropertyHandler {
 	public static final String PROP_TICKET_NAME_PREFIX = "ticketNamePrefix";
 	public static final String PROP_TICKET_GEN_DIR = "ticketGenerationDir";
 	public static final String PROP_TICKET_ARCHIVE_DIR = "ticketArchiveDir";
+	public static final String PROP_TICKET_TEMPLATE_FILE = "ticketTemplateFile";
 	public static final String PROP_MAX_CODE_DIGITS = "maxCodeDigits";
 	public static final String PROP_MAX_CHECKCODE_DIGITS = "maxCheckcodeDigits";
+	
 
 	private static final String[][] PROP_DEFAULT_VALUES = new String[][]{
 		{PROP_TICKET_NAME_PREFIX, "ticket"},
 		{PROP_MAX_CODE_DIGITS, "4"},
 		{PROP_MAX_CHECKCODE_DIGITS, "3"},
 		{PROP_TICKET_GEN_DIR, "latest"},
-		{PROP_TICKET_ARCHIVE_DIR, "archive"}
+		{PROP_TICKET_ARCHIVE_DIR, "archive"},
+		{PROP_TICKET_TEMPLATE_FILE, "template/template.pdf"}
 	};
 	
 	private static final String PROP_FILENAME = "katjuscha.properties";

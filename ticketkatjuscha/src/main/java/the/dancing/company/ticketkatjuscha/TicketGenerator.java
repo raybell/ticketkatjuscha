@@ -7,4 +7,6 @@ import com.itextpdf.text.DocumentException;
 
 public interface TicketGenerator {
     public void generate(String code, String checkCode, String ticketOwnerName, OutputStream output) throws IOException, DocumentException;
+    
+    public String getFileNameExtension();
 }

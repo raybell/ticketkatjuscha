@@ -3,7 +3,6 @@
  */
 package the.dancing.company.ticketkatjuscha;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,19 +23,14 @@ import com.itextpdf.text.pdf.PdfStamper;
  */
 public class PDFTicketGenerator implements TicketGenerator {
 
-    private static final String TEMPLATE_FILE_NAME = "template.pdf";
-    
-    private String dir; 
-    
-    public PDFTicketGenerator(String ticketGenDir) {
-        this.dir = ticketGenDir;
+    public PDFTicketGenerator() {
     }
 
     @Override
     public void generate(String code, String checkCode, String ticketOwnerName, OutputStream output) throws IOException, DocumentException {
 
         //InputStream is = this.getClass().getClassLoader().getResourceAsStream(TEMPLATE_FILE_NAME);
-        InputStream is = new FileInputStream(dir + File.separator + TEMPLATE_FILE_NAME);
+        InputStream is = new FileInputStream(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_TEMPLATE_FILE));
         
         PdfReader reader = new PdfReader(is);
         
@@ -71,6 +65,11 @@ public class PDFTicketGenerator implements TicketGenerator {
         
         reader.close();
     }
+    
+    @Override
+	public String getFileNameExtension() {
+		return "pdf";
+	}
 
     /**
      * 

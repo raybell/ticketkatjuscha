@@ -1,6 +1,7 @@
 package the.dancing.company.ticketkatjuscha;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
@@ -18,9 +19,6 @@ import the.dancing.company.ticketkatjuscha.data.CodeData;
 import the.dancing.company.ticketkatjuscha.ui.TicketOffice;
 
 public class TicketExpert {
-	private static final String TICKET_TEMPLATE_DIR = "template";
-	private static final String TICKET_NAME_SUFFIX = ".pdf";
-	
 	private int amountOfTickets;
 	private String ownerName;
 	private TicketGenerator ticketGenerator;
@@ -52,8 +50,9 @@ public class TicketExpert {
 				
 				new TicketExpert(ticketAmount, ownerName).process(new ITicketProcessFailed() {
 					@Override
-					public void handleFailedState(Exception cause) {
+					public boolean handleFailedState(Exception cause) {
 						System.exit(2);
+						return false;
 					}
 				});
 			}
@@ -75,10 +74,10 @@ public class TicketExpert {
 	public TicketExpert(int amountOfTickets, String ownerName){
 		this.amountOfTickets = amountOfTickets;
 		this.ownerName = ownerName;
-		this.ticketGenerator = new PDFTicketGenerator(TICKET_TEMPLATE_DIR);
+		this.ticketGenerator = new PDFTicketGenerator();
 	}
 	
-	public void process(ITicketProcessFailed failHandler){
+	public boolean process(ITicketProcessFailed failHandler){
 		//generate codes
 		System.out.println("Generating new ticket codes...");
 		CodeGenerator codeGenerator = null;
@@ -87,12 +86,18 @@ public class TicketExpert {
 			codeGenerator = new CodeGenerator(ownerName);
 			newCodes = codeGenerator.generateNewTicketCodes(amountOfTickets);
 		} catch (GeneratorException e) {
-			terminateWithError("Problääääm. Could not generate new ticket codes.", e, false, failHandler);
+			return terminateWithError("Problääääm. Could not generate new ticket codes.", e, false, failHandler);
 		}
 		
 		//archive old tickets
 		System.out.println("Archiving old tickets...");
 		archiveOldTickets();
+		
+		//make precheck for template file
+		File templateFile = new File(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_TEMPLATE_FILE));
+		if (!templateFile.exists() || !templateFile.isFile()){
+			return terminateWithError("Problääääm. Could not find the ticket template file in :" + templateFile.getAbsolutePath(), new FileNotFoundException("Missing or invalid template file " + templateFile.getAbsolutePath()), false, failHandler);
+		}
 		
 		//generate new tickets
 		System.out.println("Generating tickets (" + newCodes.size() + ") ...");
@@ -101,27 +106,27 @@ public class TicketExpert {
 			File tmpFile = null;
 			FileOutputStream outputStream = null;
 			try {
-				tmpFile = File.createTempFile(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_NAME_PREFIX), TICKET_NAME_SUFFIX);
+				tmpFile = File.createTempFile(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_NAME_PREFIX), this.ticketGenerator.getFileNameExtension());
 				outputStream = new FileOutputStream(tmpFile);
 				this.ticketGenerator.generate(newCode, newCodes.get(newCode).getCheckCode(), newCodes.get(newCode).getName(), outputStream);
 			} catch (IOException e) {
-				terminateWithError("Problääääm. Seems the ticket generator did not find the right byte code sequence.", e, true, failHandler);
+				return terminateWithError("Problääääm. Seems the ticket generator did not find the right byte code sequence.", e, true, failHandler);
 			} catch (DocumentException e) {
-                terminateWithError("Problääääm. Cannot create PDF.", e, true, failHandler);
+				return terminateWithError("Problääääm. Cannot create PDF.", e, true, failHandler);
             } finally{
 				if (outputStream != null){
 					try {
 						outputStream.flush();
 						outputStream.close();
 					} catch (IOException e) {
-						terminateWithError("Problääääm. Could not close the ticket file.", e, true, failHandler);
+						return terminateWithError("Problääääm. Could not close the ticket file.", e, true, failHandler);
 					}
 				}
 			}
 			
 			//move tmp file to expected output directory
 			File ticketFile = new File(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_GEN_DIR) + File.separator + 
-					makeCompatibleFileName(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_NAME_PREFIX) + "_" + newCode + "_" + codeData.getName()) + TICKET_NAME_SUFFIX);
+					makeCompatibleFileName(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_NAME_PREFIX) + "_" + newCode + "_" + codeData.getName()) + "." + this.ticketGenerator.getFileNameExtension());
 			tmpFile.renameTo(ticketFile);
 		}
 		
@@ -130,7 +135,7 @@ public class TicketExpert {
 		try {
 			codeGenerator.writeTicketCodes();
 		} catch (GeneratorException e) {
-			terminateWithError("Problääääm. Could not write new ticket codes.", e, true, failHandler);
+			return terminateWithError("Problääääm. Could not write new ticket codes.", e, true, failHandler);
 		}
 		
 		//save props
@@ -141,9 +146,10 @@ public class TicketExpert {
 		System.out.println("Yeah, seems we got it without any errors, puh. Just check path '" 
 					       + new File(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_GEN_DIR) + File.separator).getAbsolutePath() 
 					       + "' to find your tickets.");
+		return true;
 	}
 	
-	private void terminateWithError(String message, Exception e, boolean clearOutputDirectory, ITicketProcessFailed failHandler){
+	private boolean terminateWithError(String message, Exception e, boolean clearOutputDirectory, ITicketProcessFailed failHandler){
 		System.err.println(message + " Info: " + e.toString());
 		e.printStackTrace(System.err);
 		if (clearOutputDirectory){
@@ -152,7 +158,7 @@ public class TicketExpert {
 				f.delete();
 			}
 		}
-		failHandler.handleFailedState(e);
+		return failHandler.handleFailedState(e);
 	}
 	
 	private String makeCompatibleFileName(String filePartName){
