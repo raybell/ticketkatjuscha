@@ -45,20 +45,20 @@ public class PDFTicketGenerator implements TicketGenerator {
 
             BaseFont baseFont = BaseFont.createFont(BaseFont.HELVETICA, "UTF-8", true);
             
-            // code1 -> (13mm / 131mm)
-            drawText(code, mm2point(13.0f), height - mm2point(131.0f), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
+            // code1 -> (88mm / 102mm)
+            drawText(code, mm2point(88.0f), height - mm2point(102.0f), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
             
-            // code 2 -> (125mm / 131mm)
-            drawText(checkCode, mm2point(125.0f), height - mm2point(131.0f), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
+            // code 2 -> (132mm / 102mm)
+            drawText(checkCode, mm2point(132.0f), height - mm2point(102.0f), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
             
-            // name -> (132mm / 62mm)
+            // name -> (115mm / 63.6mm)
             drawText(ticketOwnerName, mm2point(115.0f), height - mm2point(63.6f), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
 
             // horizontal barcode (13mm / 105mm)
             drawBarcode(code + " " + checkCode, mm2point(13.0f), height - mm2point(105.0f), 0, PdfContentByte.ALIGN_LEFT, cb);
             
-            // vertical boarcode (25mm / 40mm)
-            drawBarcode(code + " " + checkCode, mm2point(25.0f), height - mm2point(40.0f), 90, PdfContentByte.ALIGN_RIGHT, cb);
+            // vertical boarcode (29mm / 13mm)
+            drawBarcode(code + " " + checkCode, mm2point(29.0f), height - mm2point(13.0f), 90, PdfContentByte.ALIGN_RIGHT, cb);
             
         }
         stamper.close();
@@ -92,8 +92,10 @@ public class PDFTicketGenerator implements TicketGenerator {
         float sinus = (float)Math.sin(angle);
         
         Barcode39 bc = new Barcode39();
-        bc.setBarHeight(mm2point(8));
+        bc.setBarHeight(mm2point(12));
         bc.setCode(code);
+        bc.setX(1.2f);
+        bc.setN(2.0f);
         
         Image img = bc.createImageWithBarcode(cb, BaseColor.BLACK, BaseColor.BLACK);
         img.setAlignment(align);
