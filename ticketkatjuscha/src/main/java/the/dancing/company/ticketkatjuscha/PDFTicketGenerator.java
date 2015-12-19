@@ -28,11 +28,13 @@ public class PDFTicketGenerator implements TicketGenerator {
 
     @Override
     public void generate(String code, String checkCode, String ticketOwnerName, OutputStream output) throws IOException, DocumentException {
-
-        //InputStream is = this.getClass().getClassLoader().getResourceAsStream(TEMPLATE_FILE_NAME);
         InputStream is = new FileInputStream(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_TEMPLATE_FILE));
+        generate(code, checkCode, ticketOwnerName, output, is);        
+    }
+
+    public void generate(String code, String checkCode, String ticketOwnerName, OutputStream output, InputStream templateStream) throws IOException, DocumentException {
         
-        PdfReader reader = new PdfReader(is);
+        PdfReader reader = new PdfReader(templateStream);
         
         int n = reader.getNumberOfPages();
         PdfStamper stamper = new PdfStamper(reader, output);
@@ -43,7 +45,7 @@ public class PDFTicketGenerator implements TicketGenerator {
             //float width = pageSize.getWidth();
             float height = pageSize.getHeight();
 
-            BaseFont baseFont = BaseFont.createFont(BaseFont.HELVETICA, "UTF-8", true);
+            BaseFont baseFont = BaseFont.createFont(BaseFont.HELVETICA, "winansi", true);
             
             // code1 -> (88mm / 102mm)
             drawText(code, mm2point(88.0f), height - mm2point(102.0f), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
