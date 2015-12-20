@@ -14,14 +14,14 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
-    
-    <repositories>
-        <repository>
-            <id>mvnrepository.com</id>
-            <name>mvnrepository.com</name>
-            <url>http://http://mvnrepository.com/artifact/</url>
-        </repository>
-    </repositories>
+
+	<repositories>
+		<repository>
+			<id>mvnrepository.com</id>
+			<name>mvnrepository.com</name>
+			<url>http://http://mvnrepository.com/artifact/</url>
+		</repository>
+	</repositories>
 
 	<build>
 		<plugins>
@@ -36,26 +36,28 @@
 			</plugin>
 
 			<plugin>
-				<artifactId>maven-assembly-plugin</artifactId>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>1.5</version>
 				<configuration>
-					<archive>
-						<manifest>
-							<addClasspath>true</addClasspath>
-							<mainClass>the.dancing.company.ticketkatjuscha.TicketExpert</mainClass>
-						</manifest>
-					</archive>
 					<finalName>ticketkatjuscha</finalName>
-					<appendAssemblyId>false</appendAssemblyId>
-					<descriptorRefs>
-						<descriptorRef>jar-with-dependencies</descriptorRef>
-					</descriptorRefs>
+					<transformers>
+						<transformer
+							implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+							<manifestEntries>
+								<Main-Class>the.dancing.company.ticketkatjuscha.TicketExpert</Main-Class>
+								<Build-Number>1</Build-Number>
+							</manifestEntries>
+						</transformer>
+						<transformer
+							implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+					</transformers>
 				</configuration>
 				<executions>
 					<execution>
-						<id>make-my-jar-with-dependencies</id>
 						<phase>package</phase>
 						<goals>
-							<goal>single</goal>
+							<goal>shade</goal>
 						</goals>
 					</execution>
 				</executions>
@@ -85,10 +87,20 @@
 			<artifactId>poi-ooxml</artifactId>
 			<version>3.12</version>
 		</dependency>
-        <dependency>
-            <groupId>com.itextpdf</groupId>
-            <artifactId>itextpdf</artifactId>
-            <version>5.5.8</version>
-        </dependency>
+		<dependency>
+			<groupId>com.itextpdf</groupId>
+			<artifactId>itextpdf</artifactId>
+			<version>5.5.8</version>
+		</dependency>
+		<dependency>
+			<groupId>com.sun.jersey</groupId>
+			<artifactId>jersey-server</artifactId>
+			<version>1.19</version>
+		</dependency>
+		<dependency>
+			<groupId>com.sun.jersey</groupId>
+			<artifactId>jersey-grizzly2</artifactId>
+			<version>1.19</version>
+		</dependency>
 	</dependencies>
 </project>

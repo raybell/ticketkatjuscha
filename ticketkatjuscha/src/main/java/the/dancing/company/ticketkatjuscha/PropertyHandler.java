@@ -15,6 +15,7 @@ public class PropertyHandler {
 	public static final String PROP_CODELIST_BACKUP_DIR = "codelistBackupDir";
 	public static final String PROP_MAX_CODE_DIGITS = "maxCodeDigits";
 	public static final String PROP_MAX_CHECKCODE_DIGITS = "maxCheckcodeDigits";
+	public static final String PROP_SERVER_PORT = "serverPort";
 	
 
 	private static final String[][] PROP_DEFAULT_VALUES = new String[][]{
@@ -24,7 +25,8 @@ public class PropertyHandler {
 		{PROP_TICKET_GEN_DIR, "latest"},
 		{PROP_TICKET_ARCHIVE_DIR, "archive"},
 		{PROP_TICKET_TEMPLATE_FILE, "template/template.pdf"},
-		{PROP_CODELIST_BACKUP_DIR, "backup"}
+		{PROP_CODELIST_BACKUP_DIR, "backup"},
+		{PROP_SERVER_PORT, "9998"}
 	};
 	
 	private static final String PROP_FILENAME = "katjuscha.properties";
@@ -50,6 +52,10 @@ public class PropertyHandler {
 		if (propHandler != null){
 			propHandler.saveProperties();
 		}
+	}
+	
+	public static void load(){
+		getInstance().loadProperties();
 	}
 	//***********************************
 	private PropertyHandler(){

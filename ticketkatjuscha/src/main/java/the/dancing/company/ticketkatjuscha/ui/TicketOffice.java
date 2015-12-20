@@ -55,7 +55,7 @@ public class TicketOffice extends JFrame{
 						showErrorDialog("Huiuiuiui sagt die UI, da ging wohl was in die Hose: \n\n" + cause.toString() + "\n\nMehr auf der Konsole...");
 						return false;
 					}
-				})){
+				}, System.out)){
 					showInfoDialog("Yeah!!!", "We rocked the office.");
 				}
 			}
