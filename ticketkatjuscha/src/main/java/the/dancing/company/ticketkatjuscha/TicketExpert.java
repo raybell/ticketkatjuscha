@@ -73,6 +73,8 @@ public class TicketExpert {
 						return false;
 					}
 				}, System.out);
+				//finished
+				return;
 			}
 			
 			//hmm, there must be something wrong
