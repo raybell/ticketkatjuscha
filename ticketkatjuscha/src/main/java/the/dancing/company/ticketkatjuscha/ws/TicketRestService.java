@@ -54,7 +54,7 @@ public class TicketRestService {
 				response.append("\n\n\nProcessing details:\n" + new String(baos.toByteArray()));
 			}
 		}else{
-			response.append("How much tickets do you want (queryparameter=amount)? And optionally you can give me a name (queryparameter=name).");
+			response.append("How many tickets do you want (queryparameter=amount)? And optionally you can give me a name (queryparameter=name).");
 		}
 		return Response.status(200).entity(response.toString()).build();
 	}
