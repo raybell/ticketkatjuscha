@@ -105,6 +105,11 @@ public class TicketExpert {
 			server = GrizzlyServerFactory.createHttpServer(getServerBaseURI(), rc);
 			while(true){
 				System.in.read();
+				try {
+					Thread.sleep(600000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 				System.out.println("i will never stop running...");
 			}
 		} catch (IllegalArgumentException | NullPointerException | IOException e) {
