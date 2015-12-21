@@ -38,7 +38,14 @@ public class TicketRestService {
 				if (ticketsGenerated){
 					response.append("Successfully generated " + amount + " ticket(s)" + ((name != null && name.trim().length() > 0)?" for " + name : "") + ". Just have a look in your dropbox.");
 				}
-			}finally{
+			}catch(Exception e){
+				//something unexpected occured
+				response.append("Unexpected exception occured: " + e.toString() + "\n");
+				StringWriter sw = new StringWriter();
+				e.printStackTrace(new PrintWriter(sw));
+				response.append(sw.getBuffer().toString());
+			}
+			finally{
 				try {
 					baos.flush();
 				} catch (IOException e) {
