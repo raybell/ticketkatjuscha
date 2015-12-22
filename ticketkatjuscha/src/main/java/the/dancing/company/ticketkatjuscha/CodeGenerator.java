@@ -70,7 +70,7 @@ public class CodeGenerator {
 	
 	private Ticket generateNewCode(){
 		int maxCodeDigits = PropertyHandler.getInstance().getPropertyInt(PropertyHandler.PROP_MAX_CODE_DIGITS);
-		String newCode = String.format("%0" +  maxCodeDigits + "d", Math.round(Math.random() * (maxCodeDigits * 1000)));
+		String newCode = String.format("%0" +  maxCodeDigits + "d", Math.round(Math.random() * (Math.pow(10, maxCodeDigits))));
 		if (codeList.containsKey(newCode)){
 			//we already know this code, try to create a new one
 			return generateNewCode();
