@@ -152,7 +152,7 @@ public class TicketExpert {
 		
 		//archive old tickets
 		logWriter.println("Archiving old tickets...");
-		archiveOldTickets();
+		archiveOldTickets(logWriter);
 		
 		//make precheck for template file
 		File templateFile = new File(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_TEMPLATE_FILE));
@@ -167,9 +167,9 @@ public class TicketExpert {
 			File tmpFile = null;
 			FileOutputStream outputStream = null;
 			try {
-				//tmpFile = File.createTempFile(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_NAME_PREFIX), this.ticketGenerator.getFileNameExtension());
-				tmpFile = new File(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_GEN_DIR) + 
-						File.separator + PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_NAME_PREFIX) + System.currentTimeMillis());
+				tmpFile = File.createTempFile(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_NAME_PREFIX), this.ticketGenerator.getFileNameExtension());
+//				tmpFile = new File(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_GEN_DIR) + 
+//						File.separator + PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_NAME_PREFIX) + System.currentTimeMillis());
 				outputStream = new FileOutputStream(tmpFile);
 				this.ticketGenerator.generate(newCode, newCodes.get(newCode).getCheckCode(), newCodes.get(newCode).getName(), outputStream);
 			} catch (IOException e) {
@@ -228,7 +228,7 @@ public class TicketExpert {
 		return filePartName.replaceAll("\\W+", "_");
 	}
 	
-	private void archiveOldTickets(){
+	private void archiveOldTickets(PrintStream logWriter){
 		File currentTicketsDir = new File(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_GEN_DIR) + File.separator);
 		File archiveTicketsDir = new File(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_ARCHIVE_DIR) + File.separator);
 		if (!currentTicketsDir.exists()){
@@ -238,7 +238,13 @@ public class TicketExpert {
 			archiveTicketsDir.mkdirs();
 		}
 		for (File f : currentTicketsDir.listFiles()){
-			f.renameTo(new File(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_ARCHIVE_DIR) + File.separator + f.getName()));
+			//check if the ticket already exists in archive (maybe a zombie?)
+			File archiveFile = new File(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_ARCHIVE_DIR) + File.separator + f.getName());
+			if (archiveFile.exists()){
+				logWriter.println("Warning: the ticket '" + f.getName() + "' already exists in archive. Maybe a zombie from an old event? I will delete it to archive the current ticket. Hope you do not miss it.");
+				archiveFile.delete();
+			}
+			f.renameTo(archiveFile);
 		}
 	}
 }
