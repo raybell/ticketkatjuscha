@@ -20,7 +20,7 @@ public class TicketRestService {
 	@GET
 	@Path("/maketicket")
 	@Produces("text/plain")
-	public Response responseMsg(@QueryParam("amount") int amount, @QueryParam("name") String name) {
+	public Response makeTicket(@QueryParam("amount") int amount, @QueryParam("name") String name) {
 		StringBuilder response = new StringBuilder();
 		if (amount > 0){
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -57,5 +57,24 @@ public class TicketRestService {
 			response.append("How many tickets do you want (queryparameter=amount)? And optionally you can give me a name (queryparameter=name).");
 		}
 		return Response.status(200).entity(response.toString()).build();
+	}
+	
+	@GET
+	@Path("/restart")
+	@Produces("text/plain")
+	public Response restartService(){
+		//terminate this VM instance and let the startscript invoke a restart
+		new Thread(){
+			@Override
+			public void run() {
+				try {
+					sleep(5000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				System.exit(3);
+			}
+		}.start();
+		return Response.status(200).entity("restarting in 5s... stay tuned and wait for the magic...").build();
 	}
 }
