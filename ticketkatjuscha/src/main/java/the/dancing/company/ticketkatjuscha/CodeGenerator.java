@@ -1,42 +1,35 @@
 package the.dancing.company.ticketkatjuscha;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 import org.apache.poi.EncryptedDocumentException;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.usermodel.WorkbookFactory;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import the.dancing.company.ticketkatjuscha.data.CodeData;
 import the.dancing.company.ticketkatjuscha.data.Ticket;
 
 public class CodeGenerator {
-	private static final String CODELIST_NAME = "codelist.xlsx";
-	private static final String CODELIST_SHEET = "Ticketcodes";
+	
 	
 	private String owner;
 	private Map<String, CodeData> codeList;
+	private ICodeListHandler codeListHandler;
 	
 	public CodeGenerator(String owner) throws GeneratorException{
 		this.owner = owner;
+		this.codeListHandler = CodeListHandlerFactory.produceHandler();
 		try {
 			//load exiting codes
-			loadCodelist();
-		} catch (EncryptedDocumentException | InvalidFormatException | IOException e) {
+			this.codeList = this.codeListHandler.loadCodeList();
+		} catch (EncryptedDocumentException | IOException e) {
 			throw new GeneratorException(e);
 		}
 	}
-	
+
 	public HashMap<String, CodeData> generateNewTicketCodes(int amount) throws GeneratorException{
 		try {
 			HashMap<String, CodeData> newCodeList = new HashMap<>();
@@ -59,10 +52,10 @@ public class CodeGenerator {
 		
 		try {
 			//backup old codelist
-			backupCurrentCodelist();
+			backupCurrentCodelist(this.codeListHandler.getFileName());
 			
 			//create new codelist
-			writeNewCodelist();
+			this.codeListHandler.saveCodeList(this.codeList);
 		} catch (EncryptedDocumentException | IOException e) {
 			throw new GeneratorException(e);
 		} 
@@ -75,7 +68,7 @@ public class CodeGenerator {
 			//we already know this code, try to create a new one
 			return generateNewCode();
 		}else{
-			return new Ticket(newCode, new CodeData(generateCheckCode(), owner));
+			return new Ticket(newCode, new CodeData(generateCheckCode(), owner, null));
 		}
 	}
 	
@@ -88,57 +81,14 @@ public class CodeGenerator {
 		return checkCode.toString();
 	}
 	
-	private Map<String, CodeData> loadCodelist() throws IOException, EncryptedDocumentException, InvalidFormatException{
-		codeList = new TreeMap<>();
-		File codeListFile = new File(CODELIST_NAME);
-		if (codeListFile.exists()){
-			Workbook wb = null;
-			try {
-				//load existing codes
-				wb = WorkbookFactory.create(new File(CODELIST_NAME));
-				Sheet sheet = wb.getSheet(CODELIST_SHEET);
-				for (int i = 1; i <= sheet.getLastRowNum(); i++) {
-					Row row = sheet.getRow(i);
-					codeList.put("" + row.getCell(0), new CodeData("" + row.getCell(1), "" + row.getCell(2)));
-				} 
-			} finally {
-				wb.close();
-			}
-		}
-		return codeList;
-	}
-	
-	private void writeNewCodelist() throws IOException{
-		Workbook wb = new XSSFWorkbook();
-		Sheet sheet = wb.createSheet(CODELIST_SHEET);
-		Row row0 = sheet.createRow((short)0);
-		row0.createCell(0).setCellValue("Ticketcode");
-		row0.createCell(1).setCellValue("Checkcode");
-		row0.createCell(2).setCellValue("Name");
-		for (String code : codeList.keySet()) {
-			Row row = sheet.createRow(sheet.getLastRowNum() + 1);
-			row.createCell(0).setCellValue(code);
-			row.createCell(1).setCellValue(codeList.get(code).getCheckCode());
-			row.createCell(2).setCellValue(codeList.get(code).getName());
-		}
-		FileOutputStream fileOut = null;
-		try {
-			fileOut = new FileOutputStream(CODELIST_NAME, true);
-			wb.write(fileOut);
-		} finally {
-			fileOut.close();
-			wb.close();
-		}
-	}
-	
-	private void backupCurrentCodelist(){
-		File codeListFile = new File(CODELIST_NAME);
+	private void backupCurrentCodelist(String codeListName){
+		File codeListFile = new File(codeListName);
 		if (codeListFile.exists()){
 			//make backup dir
 			new File(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_CODELIST_BACKUP_DIR) + File.separator).mkdirs();
 			//make backup
 			SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd-HHmmss");
-			File codeListBackupFile = new File(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_CODELIST_BACKUP_DIR) + File.separator + CODELIST_NAME + "." + sdf.format(new Date()) + ".bak");
+			File codeListBackupFile = new File(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_CODELIST_BACKUP_DIR) + File.separator + codeListName + "." + sdf.format(new Date()) + ".bak");
 			//delete old backup
 			if (codeListBackupFile.exists()){
 				codeListBackupFile.delete();
@@ -146,5 +96,7 @@ public class CodeGenerator {
 			codeListFile.renameTo(codeListBackupFile);
 		}
 	}
+	
+	
 	
 }
