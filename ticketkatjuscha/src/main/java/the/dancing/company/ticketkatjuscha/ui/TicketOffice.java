@@ -7,9 +7,9 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.StringTokenizer;
 
@@ -46,7 +46,7 @@ public class TicketOffice extends JFrame{
 		
 		//******** office panel ********
 		JPanel officePanel = new JPanel();
-		officePanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 20));
+		officePanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 30));
 		
 		JLabel lTicketAmount = new JLabel("Wieviel?");
 		officePanel.add(lTicketAmount);
@@ -90,7 +90,7 @@ public class TicketOffice extends JFrame{
 		
 		//************ event panel *************
 		JPanel eventPanel = new JPanel();
-		eventPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 20));
+		eventPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 10));
 		JLabel ticketCodeLabel = new JLabel("Ticket code");
 		eventPanel.add(ticketCodeLabel);
 		LimitedTextField ticketCode = new LimitedTextField(10, calculateMaxCodeLength());
@@ -123,11 +123,15 @@ public class TicketOffice extends JFrame{
 		pendingTicketLabel = new JLabel();
 		eventPanel.add(pendingTicketLabel);
 		
+		JLabel explainLabel = new JLabel("<html>Das Eingabefeld unterstützt zwei Verifizierungsmethoden.<br>Automatisch: Eingabe von Ticketcode + Prüfcode durch Leerzeichen getrennt.<br>Manuell: Eingabe des Ticketcodes + manueller Verifizerung des Prüfcodes.</html>");
+		eventPanel.add(explainLabel);
+		
 		tabPanel.addTab("Event mode", eventPanel);
 		tabPanel.addChangeListener(new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent e) {
 				if (tabPanel.getSelectedIndex() == 1){
+					updatePendingTicketsLabel(null);
 					ticketCode.grabFocus();
 				}
 			}
@@ -137,7 +141,7 @@ public class TicketOffice extends JFrame{
 		
 		updatePendingTicketsLabel(null);
 		
-		setSize(400, 150);
+		setSize(450, 170);
 		setLocationRelativeTo(null);
 		setResizable(false);
 		setVisible(true);
@@ -214,30 +218,36 @@ public class TicketOffice extends JFrame{
 			inputCheckcode = inputTokenizer.nextToken();
 		}
 		
-		if (inputCheckcode == null || inputCheckcode.trim().length() == 0){
-			showErrorDialog("Ungültiger Prüfcode.");
-			return;
-		}
-		
 		CodeData codeData = codeList.get(inputCode);
 		if (codeData == null){
-			showInfoDialogForInvalidTicket("Ungültiger code", "Konnte den Code " + inputCode + " nicht in der Codeliste finden.");
-			return;
-		}
-		
-		if (!codeData.getCheckCode().equalsIgnoreCase(inputCheckcode)){
-			showInfoDialogForInvalidTicket("Ungültiger Prüfcode", "Der Prüfcode des Tickets '" + inputCheckcode + "' stimmt nicht mit dem Prüfcode der CodeListe '" + codeData.getCheckCode() + "' überein.");
+			showInfoDialogForInvalidTicket("Ungültiger code", "Konnte den Code %s nicht in der Codeliste finden.", inputCode);
 			return;
 		}
 		
 		if (codeData.getAdditionalCodeData().getDataAsBoolean(ADDITIONAL_DATA.TICKET_WITHDRAWED)){
-			showInfoDialogForInvalidTicket("Ungültiges Ticket", "Das Ticket ist leider ungültig.");
+			showInfoDialogForInvalidTicket("Ungültiges Ticket", "Das Ticket mit dem Code %s ist leider ungültig.", inputCode);
 			return;
 		}
 		
 		if (codeData.getAdditionalCodeData().getDataAsBoolean(ADDITIONAL_DATA.TICKET_INVALIDATED)){
-			showInfoDialogForInvalidTicket("Ungültiges Ticket", "Das Ticket wurde bereits entwerted am " + codeData.getAdditionalCodeData().getData(ADDITIONAL_DATA.TICKET_INVALIDATION_TIMESTAMP));
+			showInfoDialogForInvalidTicket("Ungültiges Ticket", "Das Ticket mit dem Code %s wurde bereits entwerted am " + codeData.getAdditionalCodeData().getData(ADDITIONAL_DATA.TICKET_INVALIDATION_TIMESTAMP), inputCode);
 			return;
+		}
+		
+		if (inputCheckcode == null || inputCheckcode.trim().length() == 0){
+			//no checkcode provided, but code is valid so far
+			if (showYesNoDialog("Prüfcode prüfen", "Der Code %s ist gültig. Der dazugehörige Prüfcode lautet: %s<br>Korrekt?", inputCode, codeData.getCheckCode()) == JOptionPane.NO_OPTION){
+				//invalid checkcode
+				return;
+			}else{
+				//valid checkcode, proceed
+			}
+		}else{
+			//we have a checkcode, check it
+			if (!codeData.getCheckCode().equalsIgnoreCase(inputCheckcode)){
+				showInfoDialogForInvalidTicket("Ungültiger Prüfcode", "Der Prüfcode des Tickets %s stimmt nicht mit dem Prüfcode der CodeListe %s überein.", inputCheckcode, codeData.getCheckCode());
+				return;
+			}
 		}
 		
 		//seems the ticket is valid
@@ -253,7 +263,7 @@ public class TicketOffice extends JFrame{
 			return;
 		}
 		
-		showInfoDialog("Gültiges Ticket", "Das Ticket mit dem Code " + inputCode + " ist gültig");
+		showInfoDialog("Gültiges Ticket", "Das Ticket mit dem Code " + inputCode + " ist gültig und wurde entwertet.");
 		
 		updatePendingTicketsLabel(codeList);
 	}
@@ -270,10 +280,28 @@ public class TicketOffice extends JFrame{
 		new JOptionPane(breakTheLineIfNotBreakedYet(message)).createDialog(TicketOffice.this, title).setVisible(true);
 	}
 	
-	private void showInfoDialogForInvalidTicket(String title, String message){
+	private void showInfoDialogForInvalidTicket(String title, String message, String... params){
 		setOptionPaneBackground(Color.RED);
-		JOptionPane.showMessageDialog(this, breakTheLineIfNotBreakedYet(message), title, JOptionPane.WARNING_MESSAGE );
+		JOptionPane.showMessageDialog(this, makeHTMLMessage(message, params), title, JOptionPane.WARNING_MESSAGE );
 		resetOptionPaneBackground();
+	}
+	
+	private int showYesNoDialog(String title, String message, String... params){
+		return JOptionPane.showOptionDialog(this, makeHTMLMessage(message, params), title, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
+	}
+	
+	private static String makeHTMLMessage(String message, String... params){
+		StringWriter sw = new StringWriter();
+		sw.append("<html>");
+		
+		String[] messageParams = new String[params.length];
+		for (int i=0;i<params.length;i++) {
+			messageParams[i] = "<span style='font-size:larger;'>" + params[i] + "</span>";
+		}
+		
+		sw.append(String.format(message, messageParams));
+		sw.append("</html>");
+		return sw.toString();
 	}
 	
 	private static void resetOptionPaneBackground(){
