@@ -1,10 +1,12 @@
 package the.dancing.company.ticketkatjuscha;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
@@ -20,6 +22,7 @@ public class CodeListHandlerCSV implements ICodeListHandler{
 	
 	private static final char CODELIST_CSV_SEP = ';';
 	private static final char CODELIST_CSV_QUOTE = '\"';
+	private static final String FILE_ENCODING = "ISO8859-1";
 	
 	private String fileName;
 	
@@ -32,7 +35,7 @@ public class CodeListHandlerCSV implements ICodeListHandler{
 		Map<String, CodeData> codeList = new TreeMap<>();
 		File f = new File(fileName);
 		if (f.exists()){
-			try (CSVReader reader = new CSVReader(new FileReader(fileName), CODELIST_CSV_SEP, CODELIST_CSV_QUOTE)) {
+			try (CSVReader reader = new CSVReader(new InputStreamReader(new FileInputStream(fileName), FILE_ENCODING), CODELIST_CSV_SEP, CODELIST_CSV_QUOTE)) {
 				String[] nextLine;
 				//ignore the first line (headers)
 				reader.readNext();
@@ -83,7 +86,7 @@ public class CodeListHandlerCSV implements ICodeListHandler{
 			csvData.add(listData.toArray(new String[listData.size()]));
 		}
 		
-		try(CSVWriter writer = new CSVWriter(new FileWriter(fileName), CODELIST_CSV_SEP, CODELIST_CSV_QUOTE)){
+		try(CSVWriter writer = new CSVWriter(new OutputStreamWriter(new FileOutputStream(fileName), FILE_ENCODING), CODELIST_CSV_SEP, CODELIST_CSV_QUOTE)){
 			writer.writeAll(csvData);
 		}
 	}
