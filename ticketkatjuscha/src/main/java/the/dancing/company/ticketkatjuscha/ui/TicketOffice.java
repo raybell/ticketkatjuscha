@@ -4,6 +4,8 @@ import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.IOException;
@@ -14,6 +16,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -32,11 +35,12 @@ import the.dancing.company.ticketkatjuscha.TicketExpert;
 import the.dancing.company.ticketkatjuscha.data.AdditionalCodeData.ADDITIONAL_DATA;
 import the.dancing.company.ticketkatjuscha.data.CodeData;
 
-public class TicketOffice extends JFrame{
+public class TicketOffice extends JFrame implements IToggleFieldParent{
 
 	private static final long serialVersionUID = -7245404133018518793L;
 
 	private JLabel pendingTicketLabel;
+	private JCheckBox toggleCheckBox;
 	
 	public TicketOffice(){
 		super("Ticket Katjuscha");
@@ -46,7 +50,7 @@ public class TicketOffice extends JFrame{
 		
 		//******** office panel ********
 		JPanel officePanel = new JPanel();
-		officePanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 30));
+		officePanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 40));
 		
 		JLabel lTicketAmount = new JLabel("Wieviel?");
 		officePanel.add(lTicketAmount);
@@ -93,7 +97,7 @@ public class TicketOffice extends JFrame{
 		eventPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 10));
 		JLabel ticketCodeLabel = new JLabel("Ticket code");
 		eventPanel.add(ticketCodeLabel);
-		LimitedTextField ticketCode = new LimitedTextField(10, calculateMaxCodeLength());
+		LimitedTextField ticketCode = new LimitedTextField(10, calculateMaxCodeLength(), this, new String[]{"y","z"}, new String[]{"Y", "Z"});
 		ticketCode.addKeyListener(new KeyListener() {
 			@Override
 			public void keyPressed(KeyEvent e) {
@@ -123,7 +127,17 @@ public class TicketOffice extends JFrame{
 		pendingTicketLabel = new JLabel();
 		eventPanel.add(pendingTicketLabel);
 		
-		JLabel explainLabel = new JLabel("<html>Das Eingabefeld unterstützt zwei Verifizierungsmethoden.<br>Automatisch: Eingabe von Ticketcode + Prüfcode durch Leerzeichen getrennt.<br>Manuell: Eingabe des Ticketcodes + manueller Verifizerung des Prüfcodes.</html>");
+		toggleCheckBox = new JCheckBox("Toggle y/z (scanner mode)");
+		toggleCheckBox.setSelected(true);
+		toggleCheckBox.addChangeListener(new ChangeListener() {
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				ticketCode.grabFocus();
+			}
+		});
+		eventPanel.add(toggleCheckBox);
+		
+		JLabel explainLabel = new JLabel("<html>Das Eingabefeld unterstützt zwei Verifizierungsmethoden.<br>Automatisch: Eingabe von Ticketcode + Prüfcode durch Leerzeichen getrennt.<br>Manuell: Eingabe des Ticketcodes + manueller Verifizierung des Prüfcodes.</html>");
 		eventPanel.add(explainLabel);
 		
 		tabPanel.addTab("Event mode", eventPanel);
@@ -136,12 +150,23 @@ public class TicketOffice extends JFrame{
 				}
 			}
 		});
+		tabPanel.addFocusListener(new FocusListener() {
+			@Override
+			public void focusLost(FocusEvent e) {
+			}
+			
+			@Override
+			public void focusGained(FocusEvent e) {
+				//always set focus back to input field (to support flawless scanner usage)
+				ticketCode.grabFocus();
+			}
+		});
 		
 		add(tabPanel);
 		
 		updatePendingTicketsLabel(null);
 		
-		setSize(450, 170);
+		setSize(460, 200);
 		setLocationRelativeTo(null);
 		setResizable(false);
 		setVisible(true);
@@ -328,5 +353,10 @@ public class TicketOffice extends JFrame{
 			}
 		}
 		return sb.toString();
+	}
+
+	@Override
+	public boolean shouldToggle() {
+		return this.toggleCheckBox.isSelected();
 	}
 }
