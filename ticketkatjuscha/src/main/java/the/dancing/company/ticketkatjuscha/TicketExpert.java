@@ -8,7 +8,9 @@ import java.io.PrintStream;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriBuilderException;
@@ -20,6 +22,7 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.glassfish.grizzly.http.server.HttpServer;
+import org.javatuples.Pair;
 
 import com.itextpdf.text.DocumentException;
 import com.sun.jersey.api.container.grizzly2.GrizzlyServerFactory;
@@ -27,11 +30,16 @@ import com.sun.jersey.api.core.PackagesResourceConfig;
 import com.sun.jersey.api.core.ResourceConfig;
 
 import the.dancing.company.ticketkatjuscha.data.CodeData;
+import the.dancing.company.ticketkatjuscha.data.AdditionalCodeData.ADDITIONAL_DATA;
+import the.dancing.company.ticketkatjuscha.exceptions.EmailTransmissionException;
+import the.dancing.company.ticketkatjuscha.exceptions.GeneratorException;
 import the.dancing.company.ticketkatjuscha.ui.TicketOffice;
+import the.dancing.company.ticketkatjuscha.util.SeatTokenizer;
 
 public class TicketExpert {
 	private int amountOfTickets;
 	private String ownerName;
+	private List<Pair<String, String>> seats;
 	private TicketGenerator ticketGenerator;
 	
 	private static Options options = new Options();
@@ -66,7 +74,7 @@ public class TicketExpert {
 				int ticketAmount = Integer.parseInt(cmd.getOptionValue("a"));
 				String ownerName = cmd.getOptionValue("n", "");
 				
-				new TicketExpert(ticketAmount, ownerName).process(new ITicketProcessFailed() {
+				new TicketExpert(ticketAmount, ownerName, null).process(new ITicketProcessFailed() {
 					@Override
 					public boolean handleFailedState(Exception cause) {
 						System.exit(2);
@@ -128,9 +136,15 @@ public class TicketExpert {
 				         .build(); 
 	}
 	
-	public TicketExpert(int amountOfTickets, String ownerName){
+	public TicketExpert(int amountOfTickets, String ownerName, List<Pair<String, String>> seats){
 		this.amountOfTickets = amountOfTickets;
 		this.ownerName = ownerName;
+		this.seats = seats;
+		//check the seats
+		if (seats == null || seats.size() != amountOfTickets){
+			//seats does not fit amount of tickets
+			throw new IllegalArgumentException("Problääääm. Seats does not fit the ticket amount.");
+		}
 		this.ticketGenerator = new PDFTicketGenerator();
 	}
 	
@@ -145,7 +159,7 @@ public class TicketExpert {
 		HashMap<String, CodeData> newCodes = null;
 		try {
 			codeGenerator = new CodeGenerator(ownerName);
-			newCodes = codeGenerator.generateNewTicketCodes(amountOfTickets);
+			newCodes = codeGenerator.generateNewTicketCodes(amountOfTickets, this.seats);
 		} catch (GeneratorException e) {
 			return terminateWithError("Problääääm. Could not generate new ticket codes.", e, false, failHandler);
 		}
@@ -162,6 +176,8 @@ public class TicketExpert {
 		
 		//generate new tickets
 		logWriter.println("Generating tickets (" + newCodes.size() + ") ...");
+		List<File> ticketFiles = new ArrayList<>();
+		
 		for (String newCode : newCodes.keySet()){
 			CodeData codeData = newCodes.get(newCode);
 			File tmpFile = null;
@@ -171,7 +187,10 @@ public class TicketExpert {
 //				tmpFile = new File(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_GEN_DIR) + 
 //						File.separator + PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_NAME_PREFIX) + System.currentTimeMillis());
 				outputStream = new FileOutputStream(tmpFile);
-				this.ticketGenerator.generate(newCode, newCodes.get(newCode).getCheckCode(), newCodes.get(newCode).getName(), outputStream);
+				CodeData newCodeData = newCodes.get(newCode);
+				this.ticketGenerator.generate(newCode, newCodeData.getCheckCode(), newCodeData.getName(), 
+						                     SeatTokenizer.parseSeats(newCodeData.getAdditionalCodeData().getData(ADDITIONAL_DATA.TICKET_SEAT)).get(0), 
+						                     outputStream);
 			} catch (IOException e) {
 				return terminateWithError("Problääääm. Seems the ticket generator did not find the right byte code sequence.", e, true, failHandler);
 			} catch (DocumentException e) {
@@ -191,6 +210,7 @@ public class TicketExpert {
 			File ticketFile = new File(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_GEN_DIR) + File.separator + 
 					makeCompatibleFileName(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_NAME_PREFIX) + "_" + newCode + "_" + codeData.getName()) + "." + this.ticketGenerator.getFileNameExtension());
 			tmpFile.renameTo(ticketFile);
+			ticketFiles.add(ticketFile);
 		}
 		
 		//save codes
@@ -201,9 +221,18 @@ public class TicketExpert {
 			return terminateWithError("Problääääm. Could not write new ticket codes.", e, true, failHandler);
 		}
 		
-		//save props
-		logWriter.println("Storing properties...");
-		PropertyHandler.persist();
+		//generate email
+		try {
+			String emailText = EmailTemplate.loadTemplate().evaluateEmailText(ownerName, amountOfTickets);
+			EmailTransmitter.transmitEmail(emailText, ticketFiles);
+		} catch (IOException | EmailTransmissionException e) {
+			logWriter.print("Problääääm. Could not send the email notification: " + e.getMessage() + ". But your tickets were generated, so check the output-directory.");
+			e.printStackTrace(logWriter);
+		}
+		
+		//save props [disabled because it scrambles the props...]
+//		logWriter.println("Storing properties...");
+//		PropertyHandler.persist();
 		
 		//finished
 		logWriter.println("Yeah, seems we got it without any errors, puh. Just check path '" 

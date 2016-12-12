@@ -14,18 +14,19 @@ import javax.ws.rs.core.Response;
 
 import the.dancing.company.ticketkatjuscha.ITicketProcessFailed;
 import the.dancing.company.ticketkatjuscha.TicketExpert;
+import the.dancing.company.ticketkatjuscha.util.SeatTokenizer;
 
 @Path("/ticketservice")
 public class TicketRestService {
 	@GET
 	@Path("/maketicket")
 	@Produces("text/plain")
-	public Response makeTicket(@QueryParam("amount") int amount, @QueryParam("name") String name) {
+	public Response makeTicket(@QueryParam("amount") int amount, @QueryParam("name") String name, @QueryParam("seats") String seats) {
 		StringBuilder response = new StringBuilder();
 		if (amount > 0){
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			try{
-				boolean ticketsGenerated = new TicketExpert(amount, name).process(new ITicketProcessFailed() {
+				boolean ticketsGenerated = new TicketExpert(amount, name, SeatTokenizer.parseSeats(seats)).process(new ITicketProcessFailed() {
 					@Override
 					public boolean handleFailedState(Exception cause) {
 						response.append("Bigga bigga problem.\n");

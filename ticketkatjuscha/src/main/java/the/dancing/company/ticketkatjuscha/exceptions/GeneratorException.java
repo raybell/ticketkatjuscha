@@ -1,4 +1,4 @@
-package the.dancing.company.ticketkatjuscha;
+package the.dancing.company.ticketkatjuscha.exceptions;
 
 public class GeneratorException extends Exception {
 

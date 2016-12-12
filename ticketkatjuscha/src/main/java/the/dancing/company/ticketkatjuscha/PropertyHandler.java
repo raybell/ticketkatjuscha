@@ -16,7 +16,13 @@ public class PropertyHandler {
 	public static final String PROP_MAX_CODE_DIGITS = "maxCodeDigits";
 	public static final String PROP_MAX_CHECKCODE_DIGITS = "maxCheckcodeDigits";
 	public static final String PROP_SERVER_PORT = "serverPort";
-	
+	public static final String PROP_TICKET_PRICE = "ticketPrice";
+	public static final String PROP_DEFAULT_EMAIL_RECIPIENT = "defaultEmailRecipient";
+	public static final String PROP_EMAIL_TEMPLATE_FILE = "emailTemplateBodyFile";
+	public static final String PROP_EMAIL_TEMPLATE_SUBJECT = "emailTemplateSubject";
+	public static final String PROP_EMAIL_HOST = "mail.smtp.host";
+	public static final String PROP_EMAIL_USER = "mail.smtp.user";
+	public static final String PROP_EMAIL_PASSWORD = "mail.smtp.password";
 
 	private static final String[][] PROP_DEFAULT_VALUES = new String[][]{
 		{PROP_TICKET_NAME_PREFIX, "ticket"},
@@ -122,6 +128,9 @@ public class PropertyHandler {
 		}else{
 			return Integer.parseInt(getAndSetDefault(propName));
 		}
+	}
+	public Properties getProperties(){
+		return props;
 	}
 	//********************************************
 }

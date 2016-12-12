@@ -5,16 +5,20 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.poi.EncryptedDocumentException;
+import org.javatuples.Pair;
 
+import the.dancing.company.ticketkatjuscha.data.AdditionalCodeData;
+import the.dancing.company.ticketkatjuscha.data.AdditionalCodeData.ADDITIONAL_DATA;
+import the.dancing.company.ticketkatjuscha.exceptions.GeneratorException;
+import the.dancing.company.ticketkatjuscha.util.SeatTokenizer;
 import the.dancing.company.ticketkatjuscha.data.CodeData;
 import the.dancing.company.ticketkatjuscha.data.Ticket;
 
 public class CodeGenerator {
-	
-	
 	private String owner;
 	private Map<String, CodeData> codeList;
 	private ICodeListHandler codeListHandler;
@@ -30,11 +34,12 @@ public class CodeGenerator {
 		}
 	}
 
-	public HashMap<String, CodeData> generateNewTicketCodes(int amount) throws GeneratorException{
+	public HashMap<String, CodeData> generateNewTicketCodes(int amount,List<Pair<String, String>> seats) throws GeneratorException{
 		try {
 			HashMap<String, CodeData> newCodeList = new HashMap<>();
 			for (int i = 0; i < amount; i++) {
 				Ticket newTicket = generateNewCode();
+				newTicket.getCodeData().getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_SEAT, seats.get(i).getValue0() + SeatTokenizer.ROW_SEAT_SEPARATOR + seats.get(i).getValue1());
 				newCodeList.put(newTicket.getCode(), newTicket.getCodeData());
 				codeList.put(newTicket.getCode(), newTicket.getCodeData());
 			}
@@ -68,7 +73,7 @@ public class CodeGenerator {
 			//we already know this code, try to create a new one
 			return generateNewCode();
 		}else{
-			return new Ticket(newCode, new CodeData(generateCheckCode(), owner, null));
+			return new Ticket(newCode, new CodeData(generateCheckCode(), owner, new AdditionalCodeData()));
 		}
 	}
 	

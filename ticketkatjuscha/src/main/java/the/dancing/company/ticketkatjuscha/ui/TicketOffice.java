@@ -1,6 +1,7 @@
 package the.dancing.company.ticketkatjuscha.ui;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -11,8 +12,11 @@ import java.awt.event.KeyListener;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 
 import javax.swing.JButton;
@@ -27,6 +31,8 @@ import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.javatuples.Pair;
+
 import the.dancing.company.ticketkatjuscha.CodeListHandlerFactory;
 import the.dancing.company.ticketkatjuscha.ICodeListHandler;
 import the.dancing.company.ticketkatjuscha.ITicketProcessFailed;
@@ -34,6 +40,7 @@ import the.dancing.company.ticketkatjuscha.PropertyHandler;
 import the.dancing.company.ticketkatjuscha.TicketExpert;
 import the.dancing.company.ticketkatjuscha.data.AdditionalCodeData.ADDITIONAL_DATA;
 import the.dancing.company.ticketkatjuscha.data.CodeData;
+import the.dancing.company.ticketkatjuscha.util.SeatTokenizer;
 
 public class TicketOffice extends JFrame implements IToggleFieldParent{
 
@@ -49,8 +56,17 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 		JTabbedPane tabPanel = new JTabbedPane();
 		
 		//******** office panel ********
+		JPanel filler20 = new JPanel();
+		filler20.setPreferredSize(new Dimension(20, 1));
+		
+		JPanel filler500 = new JPanel();
+		filler500.setPreferredSize(new Dimension(500, 5));
+		
 		JPanel officePanel = new JPanel();
-		officePanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 40));
+		officePanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 10));
+		
+		officePanel.add(filler500);
+		officePanel.add(filler20);
 		
 		JLabel lTicketAmount = new JLabel("Wieviel?");
 		officePanel.add(lTicketAmount);
@@ -61,6 +77,16 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 		officePanel.add(lTicketOwner);
 		JTextField tfTicketOwner = new JTextField(7);
 		officePanel.add(tfTicketOwner);
+		
+		officePanel.add(filler20);
+		
+		JPanel seatPanel = new JPanel();
+		seatPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 1, 1));
+		
+		JLabel lSeats = new JLabel("Sitzplätze (Format: Reihe1.Sitz1,Reihe2.Sitz2)");
+		officePanel.add(lSeats);
+		JTextField tfSeats = new JTextField(20);
+		officePanel.add(tfSeats);
 		
 		JButton makeTickets = new JButton("Gib's mir");
 		officePanel.add(makeTickets);
@@ -79,7 +105,25 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 					showErrorDialog("Ich glaub du willst mit mir spielen. Gib mir eine Zahl, nicht zu gross, nicht zu klein, irgendwas dazwischen.");
 					return;
 				}
-				if (new TicketExpert(ticketAmount, tfTicketOwner.getText()).process(new ITicketProcessFailed() {
+				List<Pair<String, String>> seats;
+				if (isFilled(tfSeats)){
+					//check seats
+					try {
+						seats = SeatTokenizer.parseSeats(tfSeats.getText());
+						if (seats.size() != ticketAmount){
+							showErrorDialog("Es gibt nicht genug oder viel zu viele Plätze für deine Gäste. Wir brauchen " + ticketAmount + ", aber du willst mir " + seats.size() + " geben. Das geht so nicht.");
+							return;
+						}
+					} catch (NoSuchElementException e1) {
+						showErrorDialog("Das sind aber komische Sitze, ich glaube nicht dass Gäste darauf ihren Platz finden werden.");
+						return;
+					}
+				}else{
+					showErrorDialog("Wo sollen sie alle nur sitzen? Oder sollen sie alle stehen? Nein, das können wir ihnen nicht antun!");
+					return;
+				}
+				
+				if (new TicketExpert(ticketAmount, tfTicketOwner.getText(), seats).process(new ITicketProcessFailed() {
 					@Override
 					public boolean handleFailedState(Exception cause) {
 						showErrorDialog("Huiuiuiui sagt die UI, da ging wohl was in die Hose: \n\n" + cause.toString() + "\n\nMehr auf der Konsole...");
@@ -166,9 +210,9 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 		
 		updatePendingTicketsLabel(null);
 		
-		setSize(460, 200);
+		setSize(520, 210);
 		setLocationRelativeTo(null);
-		setResizable(false);
+		setResizable(true);
 		setVisible(true);
 	}
 	

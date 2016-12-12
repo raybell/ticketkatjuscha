@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import org.javatuples.Pair;
+
 import com.itextpdf.text.BaseColor;
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Image;
@@ -27,12 +29,12 @@ public class PDFTicketGenerator implements TicketGenerator {
     }
 
     @Override
-    public void generate(String code, String checkCode, String ticketOwnerName, OutputStream output) throws IOException, DocumentException {
+    public void generate(String code, String checkCode, String ticketOwnerName, Pair<String, String> seat, OutputStream output) throws IOException, DocumentException {
         InputStream is = new FileInputStream(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_TEMPLATE_FILE));
-        generate(code, checkCode, ticketOwnerName, output, is);        
+        generate(code, checkCode, ticketOwnerName, seat, output, is);        
     }
 
-    public void generate(String code, String checkCode, String ticketOwnerName, OutputStream output, InputStream templateStream) throws IOException, DocumentException {
+    public void generate(String code, String checkCode, String ticketOwnerName, Pair<String, String> seat, OutputStream output, InputStream templateStream) throws IOException, DocumentException {
         
         PdfReader reader = new PdfReader(templateStream);
         
@@ -48,14 +50,20 @@ public class PDFTicketGenerator implements TicketGenerator {
             BaseFont baseFont = BaseFont.createFont(BaseFont.HELVETICA, "winansi", true);
             
             // code1 -> (88mm / 102mm)
-            drawText(code, mm2point(88.0f), height - mm2point(102.0f), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
+            drawText(code, mm2point(88.0f), height - mm2point(105.0f), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
             
             // code 2 -> (132mm / 102mm)
-            drawText(checkCode, mm2point(132.0f), height - mm2point(102.0f), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
+            drawText(checkCode, mm2point(132.0f), height - mm2point(105.0f), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
             
             // name -> (115mm / 63.6mm)
             drawText(ticketOwnerName, mm2point(115.0f), height - mm2point(63.6f), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
 
+            // row
+            drawText(seat.getValue0(), mm2point(52.0f), height - mm2point(73.5f), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
+            
+            //seat
+            drawText(seat.getValue1(), mm2point(98.0f), height - mm2point(73.5f), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
+            
             // horizontal barcode (13mm / 105mm)
             drawBarcode(code + " " + checkCode, mm2point(13.0f), height - mm2point(105.0f), 0, PdfContentByte.ALIGN_LEFT, cb);
             
