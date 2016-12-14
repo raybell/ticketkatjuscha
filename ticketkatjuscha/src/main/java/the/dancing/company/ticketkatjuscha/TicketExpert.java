@@ -5,7 +5,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -22,6 +21,7 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.glassfish.grizzly.http.server.HttpServer;
+import org.glassfish.grizzly.http.server.NetworkListener;
 import org.javatuples.Pair;
 
 import com.itextpdf.text.DocumentException;
@@ -29,8 +29,8 @@ import com.sun.jersey.api.container.grizzly2.GrizzlyServerFactory;
 import com.sun.jersey.api.core.PackagesResourceConfig;
 import com.sun.jersey.api.core.ResourceConfig;
 
-import the.dancing.company.ticketkatjuscha.data.CodeData;
 import the.dancing.company.ticketkatjuscha.data.AdditionalCodeData.ADDITIONAL_DATA;
+import the.dancing.company.ticketkatjuscha.data.CodeData;
 import the.dancing.company.ticketkatjuscha.exceptions.EmailTransmissionException;
 import the.dancing.company.ticketkatjuscha.exceptions.GeneratorException;
 import the.dancing.company.ticketkatjuscha.ui.TicketOffice;
@@ -132,7 +132,7 @@ public class TicketExpert {
     }
 	
 	private static URI getServerBaseURI() throws IllegalArgumentException, UriBuilderException, UnknownHostException{
-		return UriBuilder.fromUri("http://" + InetAddress.getLocalHost().getHostName())
+		return UriBuilder.fromUri("http://" + NetworkListener.DEFAULT_NETWORK_HOST)
 				         .port(PropertyHandler.getInstance().getPropertyInt(PropertyHandler.PROP_SERVER_PORT))
 				         .build(); 
 	}
