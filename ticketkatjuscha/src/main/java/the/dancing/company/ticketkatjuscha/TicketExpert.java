@@ -113,10 +113,16 @@ public class TicketExpert {
         try {
 			server = GrizzlyServerFactory.createHttpServer(getServerBaseURI(), rc);
 			while(true){
-				System.in.read();
+				try {
+					System.in.read();
+				} catch (IOException e) {
+					//in case we are running in background (nohup) we may get exceptions reading from the system.in
+					e.printStackTrace();
+				}
 				try {
 					Thread.sleep(600000);
 				} catch (InterruptedException e) {
+					//hui seems we got interupted, try to proceed and look what happens
 					e.printStackTrace();
 				}
 				System.out.println("i will never stop running...");
