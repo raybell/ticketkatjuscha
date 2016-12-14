@@ -16,7 +16,7 @@ public class EmailTemplate {
 		String emailTemplateFile = PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_EMAIL_TEMPLATE_FILE);
 		File f = new File(emailTemplateFile);
 		if (f.exists()){
-			return new EmailTemplate(new String(Files.readAllBytes(f.toPath())));
+			return new EmailTemplate(new String(Files.readAllBytes(f.toPath()), "ISO8859-1"));
 		} else{
 			throw new IOException("template file '" + f.getAbsolutePath() + "' not found");
 		}
