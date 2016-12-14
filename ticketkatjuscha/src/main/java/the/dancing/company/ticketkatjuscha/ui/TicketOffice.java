@@ -134,8 +134,8 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 				
 				if (new TicketExpert(ticketAmount, tfTicketOwner.getText(), seats, tfTicketRecipient.getText()).process(new ITicketProcessFailed() {
 					@Override
-					public boolean handleFailedState(Exception cause) {
-						showErrorDialog("Huiuiuiui sagt die UI, da ging wohl was in die Hose: \n\n" + cause.toString() + "\n\nMehr auf der Konsole...");
+					public boolean handleFailedState(String message, Exception cause) {
+						showErrorDialog("Huiuiuiui sagt die UI, da ging wohl was in die Hose.\nNachricht: " + message + (cause != null ? "\n\nInfos vom Verursacher: " + cause.toString() : "" ) + "\n\nMehr auf der Konsole...");
 						return false;
 					}
 				}, System.out)){

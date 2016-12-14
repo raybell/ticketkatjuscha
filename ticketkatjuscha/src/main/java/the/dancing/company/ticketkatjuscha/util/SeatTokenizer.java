@@ -22,4 +22,8 @@ public class SeatTokenizer {
 		
 		return list;
 	}
+	
+	public static String makeSeatToken(Pair<String, String> seat){
+		return seat.getValue0() + ROW_SEAT_SEPARATOR + seat.getValue1();
+	}
 }

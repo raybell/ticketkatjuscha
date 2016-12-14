@@ -21,6 +21,7 @@ import the.dancing.company.ticketkatjuscha.data.Ticket;
 public class CodeGenerator {
 	private String owner;
 	private Map<String, CodeData> codeList;
+	private Map<String, CodeData> seatMap;
 	private ICodeListHandler codeListHandler;
 	
 	public CodeGenerator(String owner) throws GeneratorException{
@@ -34,12 +35,12 @@ public class CodeGenerator {
 		}
 	}
 
-	public HashMap<String, CodeData> generateNewTicketCodes(int amount,List<Pair<String, String>> seats, String emailRecipient) throws GeneratorException{
+	public HashMap<String, CodeData> generateNewTicketCodes(int amount, List<Pair<String, String>> seats, String emailRecipient) throws GeneratorException{
 		try {
 			HashMap<String, CodeData> newCodeList = new HashMap<>();
 			for (int i = 0; i < amount; i++) {
 				Ticket newTicket = generateNewCode();
-				newTicket.getCodeData().getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_SEAT, seats.get(i).getValue0() + SeatTokenizer.ROW_SEAT_SEPARATOR + seats.get(i).getValue1());
+				newTicket.getCodeData().getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_SEAT, SeatTokenizer.makeSeatToken(seats.get(i)));
 				newTicket.getCodeData().getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_EMAIL, emailRecipient);
 				newCodeList.put(newTicket.getCode(), newTicket.getCodeData());
 				codeList.put(newTicket.getCode(), newTicket.getCodeData());
@@ -65,6 +66,25 @@ public class CodeGenerator {
 		} catch (EncryptedDocumentException | IOException e) {
 			throw new GeneratorException(e);
 		} 
+	}
+	
+	public boolean checkIfSeatsAreFree(List<Pair<String, String>> seats){
+		if (seatMap == null){
+			//fill the map with seats
+			seatMap = new HashMap<>();
+			for (CodeData codeData : this.codeList.values()){
+				String seat = codeData.getAdditionalCodeData().getData(ADDITIONAL_DATA.TICKET_SEAT);
+				if (seat != null){
+					seatMap.put(seat, codeData);
+				}
+			}
+		}
+		for (Pair<String, String> pair : seats) {
+			if (seatMap.containsKey(SeatTokenizer.makeSeatToken(pair))){
+				return false;
+			}
+		}
+		return true;
 	}
 	
 	private Ticket generateNewCode(){
@@ -102,7 +122,4 @@ public class CodeGenerator {
 			codeListFile.renameTo(codeListBackupFile);
 		}
 	}
-	
-	
-	
 }

@@ -28,11 +28,14 @@ public class TicketRestService {
 			try{
 				boolean ticketsGenerated = new TicketExpert(amount, name, SeatTokenizer.parseSeats(seats), recipient).process(new ITicketProcessFailed() {
 					@Override
-					public boolean handleFailedState(Exception cause) {
+					public boolean handleFailedState(String message, Exception cause) {
 						response.append("Bigga bigga problem.\n");
-						StringWriter errorWriter = new StringWriter();
-						cause.printStackTrace(new PrintWriter(errorWriter));
-						response.append(errorWriter.getBuffer());
+						response.append("Message: " + message + "\n");
+						if (cause != null){
+							StringWriter errorWriter = new StringWriter();
+							cause.printStackTrace(new PrintWriter(errorWriter));
+							response.append(errorWriter.getBuffer());
+						}
 						return false;
 					}
 				}, new PrintStream(baos));

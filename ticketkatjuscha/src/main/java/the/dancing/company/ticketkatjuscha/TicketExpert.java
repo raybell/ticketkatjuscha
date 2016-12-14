@@ -77,7 +77,7 @@ public class TicketExpert {
 				
 				new TicketExpert(ticketAmount, ownerName, null, null).process(new ITicketProcessFailed() {
 					@Override
-					public boolean handleFailedState(Exception cause) {
+					public boolean handleFailedState(String message, Exception cause) {
 						System.exit(2);
 						return false;
 					}
@@ -167,6 +167,13 @@ public class TicketExpert {
 		HashMap<String, CodeData> newCodes = null;
 		try {
 			codeGenerator = new CodeGenerator(ownerName);
+			
+			//check if the seats are still free
+			if (!codeGenerator.checkIfSeatsAreFree(this.seats)){
+				return terminateWithError("Problääääm. One or more of the seats haben already einen sitzen.", null, false, failHandler);
+			}
+			
+			//make new code
 			newCodes = codeGenerator.generateNewTicketCodes(amountOfTickets, this.seats, this.emailRecipient);
 		} catch (GeneratorException e) {
 			return terminateWithError("Problääääm. Could not generate new ticket codes.", e, false, failHandler);
@@ -230,6 +237,7 @@ public class TicketExpert {
 		}
 		
 		//generate email
+		logWriter.println("Sending email notification...");
 		try {
 			String emailText = EmailTemplate.loadTemplate().evaluateEmailText(ownerName, amountOfTickets);
 			EmailTransmitter.transmitEmail(emailText, ticketFiles, emailRecipient);
@@ -250,15 +258,19 @@ public class TicketExpert {
 	}
 	
 	private boolean terminateWithError(String message, Exception e, boolean clearOutputDirectory, ITicketProcessFailed failHandler){
-		System.err.println(message + " Info: " + e.toString());
-		e.printStackTrace(System.err);
+		System.err.println(message);
+		if (e != null){
+			System.err.println("Info: " + e.toString());
+			e.printStackTrace(System.err);
+		}
+		
 		if (clearOutputDirectory){
 			File outputDir = new File(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_GEN_DIR) + File.separator);
 			for (File f : outputDir.listFiles()){
 				f.delete();
 			}
 		}
-		return failHandler.handleFailedState(e);
+		return failHandler.handleFailedState(message, e);
 	}
 	
 	private String makeCompatibleFileName(String filePartName){
