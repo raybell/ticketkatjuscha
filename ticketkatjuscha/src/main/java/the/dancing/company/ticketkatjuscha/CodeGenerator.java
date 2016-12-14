@@ -34,12 +34,13 @@ public class CodeGenerator {
 		}
 	}
 
-	public HashMap<String, CodeData> generateNewTicketCodes(int amount,List<Pair<String, String>> seats) throws GeneratorException{
+	public HashMap<String, CodeData> generateNewTicketCodes(int amount,List<Pair<String, String>> seats, String emailRecipient) throws GeneratorException{
 		try {
 			HashMap<String, CodeData> newCodeList = new HashMap<>();
 			for (int i = 0; i < amount; i++) {
 				Ticket newTicket = generateNewCode();
 				newTicket.getCodeData().getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_SEAT, seats.get(i).getValue0() + SeatTokenizer.ROW_SEAT_SEPARATOR + seats.get(i).getValue1());
+				newTicket.getCodeData().getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_EMAIL, emailRecipient);
 				newCodeList.put(newTicket.getCode(), newTicket.getCodeData());
 				codeList.put(newTicket.getCode(), newTicket.getCodeData());
 			}

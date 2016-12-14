@@ -21,12 +21,12 @@ public class TicketRestService {
 	@GET
 	@Path("/maketicket")
 	@Produces("text/plain")
-	public Response makeTicket(@QueryParam("amount") int amount, @QueryParam("name") String name, @QueryParam("seats") String seats) {
+	public Response makeTicket(@QueryParam("amount") int amount, @QueryParam("name") String name, @QueryParam("seats") String seats, @QueryParam("recipient") String recipient) {
 		StringBuilder response = new StringBuilder();
 		if (amount > 0){
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			try{
-				boolean ticketsGenerated = new TicketExpert(amount, name, SeatTokenizer.parseSeats(seats)).process(new ITicketProcessFailed() {
+				boolean ticketsGenerated = new TicketExpert(amount, name, SeatTokenizer.parseSeats(seats), recipient).process(new ITicketProcessFailed() {
 					@Override
 					public boolean handleFailedState(Exception cause) {
 						response.append("Bigga bigga problem.\n");

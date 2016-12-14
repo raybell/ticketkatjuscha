@@ -7,7 +7,8 @@ public class AdditionalCodeData {
 		TICKET_WITHDRAWED("Withdrawed"),
 		TICKET_INVALIDATED("Invalidated"),
 		TICKET_INVALIDATION_TIMESTAMP("Invalidation time"),
-		TICKET_SEAT("Seat");
+		TICKET_SEAT("Seat"),
+		TICKET_EMAIL("eMail");
 		
 		private String columnTitle;
 		ADDITIONAL_DATA(String columnTitle){

@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
+import org.apache.commons.lang3.StringUtils;
+
 public class EmailTemplate {
 	private static String TEMPLATE_PLACEHOLDER_NAME = "%%name%%";
 	private static String TEMPLATE_PLACEHOLDER_PRICE = "%%price%%";
@@ -25,7 +27,7 @@ public class EmailTemplate {
 	}
 	
 	public String evaluateEmailText(String recipientName, int ticketAmount){
-		return this.templateText.replaceAll(TEMPLATE_PLACEHOLDER_NAME, recipientName)
+		return this.templateText.replaceAll(TEMPLATE_PLACEHOLDER_NAME, StringUtils.splitByWholeSeparator(recipientName, StringUtils.SPACE)[0].trim())
 		                        .replaceAll(TEMPLATE_PLACEHOLDER_PRICE, "" + PropertyHandler.getInstance().getPropertyInt(PropertyHandler.PROP_TICKET_PRICE) * ticketAmount);
 	}
 	

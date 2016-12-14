@@ -22,6 +22,7 @@ public class PropertyHandler {
 	public static final String PROP_EMAIL_TEMPLATE_SUBJECT = "emailTemplateSubject";
 	public static final String PROP_EMAIL_HOST = "mail.smtp.host";
 	public static final String PROP_EMAIL_USER = "mail.smtp.user";
+	public static final String PROP_EMAIL_SENDERNAME = "mail.smtp.sendername";
 	public static final String PROP_EMAIL_PASSWORD = "mail.smtp.password";
 
 	private static final String[][] PROP_DEFAULT_VALUES = new String[][]{

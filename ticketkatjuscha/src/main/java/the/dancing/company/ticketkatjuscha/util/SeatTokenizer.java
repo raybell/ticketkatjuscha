@@ -17,7 +17,7 @@ public class SeatTokenizer {
 		ArrayList<Pair<String, String>> list = new ArrayList<>();
 		while(seatsTokens.hasMoreTokens()){
 			StringTokenizer seatsCordinateTokens = new StringTokenizer(seatsTokens.nextToken(), ROW_SEAT_SEPARATOR);
-			list.add(new Pair<String, String>(seatsCordinateTokens.nextToken(), seatsCordinateTokens.nextToken()));
+			list.add(new Pair<String, String>(seatsCordinateTokens.nextToken().trim(), seatsCordinateTokens.nextToken().trim()));
 		}
 		
 		return list;

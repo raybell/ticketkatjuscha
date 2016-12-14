@@ -78,6 +78,11 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 		JTextField tfTicketOwner = new JTextField(7);
 		officePanel.add(tfTicketOwner);
 		
+		JLabel lTicketRecipient = new JLabel("Wohin?");
+		officePanel.add(lTicketRecipient);
+		JTextField tfTicketRecipient = new JTextField(7);
+		officePanel.add(tfTicketRecipient);
+		
 		officePanel.add(filler20);
 		
 		JPanel seatPanel = new JPanel();
@@ -122,8 +127,12 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 					showErrorDialog("Wo sollen sie alle nur sitzen? Oder sollen sie alle stehen? Nein, das können wir ihnen nicht antun!");
 					return;
 				}
+				if (!isFilled(tfTicketOwner)){
+					showErrorDialog("Wie heißt der Sack / die Säckin?");
+					return;
+				}
 				
-				if (new TicketExpert(ticketAmount, tfTicketOwner.getText(), seats).process(new ITicketProcessFailed() {
+				if (new TicketExpert(ticketAmount, tfTicketOwner.getText(), seats, tfTicketRecipient.getText()).process(new ITicketProcessFailed() {
 					@Override
 					public boolean handleFailedState(Exception cause) {
 						showErrorDialog("Huiuiuiui sagt die UI, da ging wohl was in die Hose: \n\n" + cause.toString() + "\n\nMehr auf der Konsole...");

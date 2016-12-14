@@ -41,6 +41,7 @@ public class TicketExpert {
 	private String ownerName;
 	private List<Pair<String, String>> seats;
 	private TicketGenerator ticketGenerator;
+	private String emailRecipient;
 	
 	private static Options options = new Options();
 	static{
@@ -74,7 +75,7 @@ public class TicketExpert {
 				int ticketAmount = Integer.parseInt(cmd.getOptionValue("a"));
 				String ownerName = cmd.getOptionValue("n", "");
 				
-				new TicketExpert(ticketAmount, ownerName, null).process(new ITicketProcessFailed() {
+				new TicketExpert(ticketAmount, ownerName, null, null).process(new ITicketProcessFailed() {
 					@Override
 					public boolean handleFailedState(Exception cause) {
 						System.exit(2);
@@ -136,10 +137,11 @@ public class TicketExpert {
 				         .build(); 
 	}
 	
-	public TicketExpert(int amountOfTickets, String ownerName, List<Pair<String, String>> seats){
+	public TicketExpert(int amountOfTickets, String ownerName, List<Pair<String, String>> seats, String recipient){
 		this.amountOfTickets = amountOfTickets;
 		this.ownerName = ownerName;
 		this.seats = seats;
+		this.emailRecipient = recipient;
 		//check the seats
 		if (seats == null || seats.size() != amountOfTickets){
 			//seats does not fit amount of tickets
@@ -159,7 +161,7 @@ public class TicketExpert {
 		HashMap<String, CodeData> newCodes = null;
 		try {
 			codeGenerator = new CodeGenerator(ownerName);
-			newCodes = codeGenerator.generateNewTicketCodes(amountOfTickets, this.seats);
+			newCodes = codeGenerator.generateNewTicketCodes(amountOfTickets, this.seats, this.emailRecipient);
 		} catch (GeneratorException e) {
 			return terminateWithError("Problääääm. Could not generate new ticket codes.", e, false, failHandler);
 		}
@@ -224,7 +226,7 @@ public class TicketExpert {
 		//generate email
 		try {
 			String emailText = EmailTemplate.loadTemplate().evaluateEmailText(ownerName, amountOfTickets);
-			EmailTransmitter.transmitEmail(emailText, ticketFiles);
+			EmailTransmitter.transmitEmail(emailText, ticketFiles, emailRecipient);
 		} catch (IOException | EmailTransmissionException e) {
 			logWriter.print("Problääääm. Could not send the email notification: " + e.getMessage() + ". But your tickets were generated, so check the output-directory.");
 			e.printStackTrace(logWriter);
