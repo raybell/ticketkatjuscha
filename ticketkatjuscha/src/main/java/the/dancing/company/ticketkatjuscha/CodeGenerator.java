@@ -74,7 +74,8 @@ public class CodeGenerator {
 			seatMap = new HashMap<>();
 			for (CodeData codeData : this.codeList.values()){
 				String seat = codeData.getAdditionalCodeData().getData(ADDITIONAL_DATA.TICKET_SEAT);
-				if (seat != null){
+				boolean withdrawed = codeData.getAdditionalCodeData().getDataAsBoolean(ADDITIONAL_DATA.TICKET_WITHDRAWED);
+				if (!withdrawed && seat != null){
 					seatMap.put(seat, codeData);
 				}
 			}
