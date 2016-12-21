@@ -15,6 +15,7 @@ import javax.ws.rs.core.Response;
 import the.dancing.company.ticketkatjuscha.ITicketProcessFailed;
 import the.dancing.company.ticketkatjuscha.TicketExpert;
 import the.dancing.company.ticketkatjuscha.util.SeatTokenizer;
+import the.dancing.company.ticketkatjuscha.util.Toolbox;
 
 @Path("/ticketservice")
 public class TicketRestService {
@@ -80,5 +81,12 @@ public class TicketRestService {
 			}
 		}.start();
 		return Response.status(200).entity("restarting in 5s... stay tuned and wait for the magic...").build();
+	}
+	
+	@GET
+	@Path("/version")
+	@Produces("text/plain")
+	public Response getProgVersion(){
+		return Response.status(200).entity(Toolbox.getProgVersion()).build();
 	}
 }
