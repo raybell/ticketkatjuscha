@@ -58,14 +58,16 @@ public class EmailTransmitter {
             multipart.addBodyPart(body);
             
             //add attachments
-            for (File ticketFile : ticketFiles) {
-            	MimeBodyPart attachMent = new MimeBodyPart();
-                FileDataSource dataSource = new FileDataSource(ticketFile);
-                attachMent.setDataHandler(new DataHandler(dataSource));
-                attachMent.setFileName(ticketFile.getName());
-                attachMent.setDisposition(MimeBodyPart.ATTACHMENT);
-                multipart.addBodyPart(attachMent);
-			}
+            if (ticketFiles != null){
+	            for (File ticketFile : ticketFiles) {
+	            	MimeBodyPart attachMent = new MimeBodyPart();
+	                FileDataSource dataSource = new FileDataSource(ticketFile);
+	                attachMent.setDataHandler(new DataHandler(dataSource));
+	                attachMent.setFileName(ticketFile.getName());
+	                attachMent.setDisposition(MimeBodyPart.ATTACHMENT);
+	                multipart.addBodyPart(attachMent);
+				}
+	        }
             
             message.setContent(multipart);
             

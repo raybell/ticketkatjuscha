@@ -14,6 +14,8 @@ import javax.ws.rs.core.Response;
 
 import the.dancing.company.ticketkatjuscha.ITicketProcessFailed;
 import the.dancing.company.ticketkatjuscha.TicketExpert;
+import the.dancing.company.ticketkatjuscha.TicketNotifier;
+import the.dancing.company.ticketkatjuscha.TicketNotifier.NOTIFICATION_TYPE;
 import the.dancing.company.ticketkatjuscha.util.SeatTokenizer;
 import the.dancing.company.ticketkatjuscha.util.Toolbox;
 
@@ -65,6 +67,20 @@ public class TicketRestService {
 	}
 	
 	@GET
+	@Path("/sendPaymentReminder")
+	@Produces("text/plain")
+	public Response sendPaymentReminder(@QueryParam("seats") String seats) {
+		return sendTicketNotification(seats, NOTIFICATION_TYPE.PAYMENT_NOTIFICATION);
+	}
+	
+	@GET
+	@Path("/sendTicketRevocation")
+	@Produces("text/plain")
+	public Response sendTicketRevocation(@QueryParam("seats") String seats) {
+		return sendTicketNotification(seats, NOTIFICATION_TYPE.TICKET_REVOCATION);
+	}
+	
+	@GET
 	@Path("/restart")
 	@Produces("text/plain")
 	public Response restartService(){
@@ -88,5 +104,31 @@ public class TicketRestService {
 	@Produces("text/plain")
 	public Response getProgVersion(){
 		return Response.status(200).entity(Toolbox.getProgVersion()).build();
+	}
+	
+	private Response sendTicketNotification(String seats, NOTIFICATION_TYPE type){
+		StringBuilder response = new StringBuilder();
+		
+		TicketNotifier ticketNotifier = new TicketNotifier(new ITicketProcessFailed() {
+			@Override
+			public boolean handleFailedState(String message, Exception cause) {
+				response.append("Bigga bigga problem.\n");
+				response.append("Message: " + message + "\n");
+				if (cause != null){
+					StringWriter errorWriter = new StringWriter();
+					cause.printStackTrace(new PrintWriter(errorWriter));
+					response.append(errorWriter.getBuffer());
+				}
+				return false;
+			}
+		});
+		
+		boolean sendNotification = ticketNotifier.sendNotification(SeatTokenizer.parseSeats(seats), type);
+		
+		if (sendNotification){
+			response.append("Successfully sent " + type.getName() + " to " + ticketNotifier.getLastRecipient());
+		}
+		
+		return Response.status(200).entity(response.toString()).build();
 	}
 }

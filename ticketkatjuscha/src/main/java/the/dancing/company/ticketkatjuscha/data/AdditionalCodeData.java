@@ -8,7 +8,8 @@ public class AdditionalCodeData {
 		TICKET_INVALIDATED("Invalidated"),
 		TICKET_INVALIDATION_TIMESTAMP("Invalidation time"),
 		TICKET_SEAT("Seat"),
-		TICKET_EMAIL("eMail");
+		TICKET_EMAIL("eMail"),
+		TICKET_PAYMENT_REMINDER("Payment Reminder Counter");
 		
 		private String columnTitle;
 		ADDITIONAL_DATA(String columnTitle){
@@ -31,6 +32,15 @@ public class AdditionalCodeData {
 	public boolean getDataAsBoolean(ADDITIONAL_DATA dataType){
 		String data = getData(dataType);
 		return Boolean.parseBoolean(data) || parseIntAsBool(data);
+	}
+	
+	public int getDataAsInt(ADDITIONAL_DATA dataType){
+		String data = getData(dataType);
+		try {
+			return Integer.parseInt(data);
+		} catch (NumberFormatException e) {
+			return 0;
+		}
 	}
 	
 	public String[] getDataList(){

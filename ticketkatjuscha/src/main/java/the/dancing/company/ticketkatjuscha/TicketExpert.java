@@ -29,6 +29,7 @@ import com.sun.jersey.api.container.grizzly2.GrizzlyServerFactory;
 import com.sun.jersey.api.core.PackagesResourceConfig;
 import com.sun.jersey.api.core.ResourceConfig;
 
+import the.dancing.company.ticketkatjuscha.EmailTemplate.TEMPLATES;
 import the.dancing.company.ticketkatjuscha.data.AdditionalCodeData.ADDITIONAL_DATA;
 import the.dancing.company.ticketkatjuscha.data.CodeData;
 import the.dancing.company.ticketkatjuscha.exceptions.EmailTransmissionException;
@@ -239,7 +240,7 @@ public class TicketExpert {
 		//generate email
 		logWriter.println("Sending email notification...");
 		try {
-			String emailText = EmailTemplate.loadTemplate().evaluateEmailText(ownerName, amountOfTickets);
+			String emailText = EmailTemplate.loadTemplate(TEMPLATES.TICKET_TEMPLATE).evaluateEmailText(ownerName, amountOfTickets);
 			EmailTransmitter.transmitEmail(emailText, ticketFiles, emailRecipient);
 		} catch (IOException | EmailTransmissionException e) {
 			logWriter.print("Problääääm. Could not send the email notification: " + e.getMessage() + ". But your tickets were generated, so check the output-directory.");

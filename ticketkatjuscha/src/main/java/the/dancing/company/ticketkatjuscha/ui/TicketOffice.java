@@ -12,7 +12,6 @@ import java.awt.event.KeyListener;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +37,7 @@ import the.dancing.company.ticketkatjuscha.ICodeListHandler;
 import the.dancing.company.ticketkatjuscha.ITicketProcessFailed;
 import the.dancing.company.ticketkatjuscha.PropertyHandler;
 import the.dancing.company.ticketkatjuscha.TicketExpert;
+import the.dancing.company.ticketkatjuscha.TicketNotifier;
 import the.dancing.company.ticketkatjuscha.data.AdditionalCodeData.ADDITIONAL_DATA;
 import the.dancing.company.ticketkatjuscha.data.CodeData;
 import the.dancing.company.ticketkatjuscha.util.SeatTokenizer;
@@ -48,6 +48,7 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 
 	private JLabel pendingTicketLabel;
 	private JCheckBox toggleCheckBox;
+	
 	
 	public TicketOffice(){
 		super("Ticket Katjuscha");
@@ -145,6 +146,36 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 		});
 		tabPanel.addTab("Ticket Office", officePanel);
 		
+		//************ ticket notification panel *************
+		JPanel ticketNotifyPanel = new JPanel();
+		ticketNotifyPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 10));
+		JLabel ticketNotifySeatsLabel = new JLabel("Sitzplätze (Format: Reihe1.Sitz1,Reihe2.Sitz2)");
+		ticketNotifyPanel.add(ticketNotifySeatsLabel);
+		JTextField ticketNotifySeats = new JTextField(20);
+		ticketNotifyPanel.add(ticketNotifySeats);
+		
+		JButton sendPaymentNotification = new JButton("Zahlungserinnerung");
+		ticketNotifyPanel.add(sendPaymentNotification);
+		
+		sendPaymentNotification.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				handleNotificationClick(ticketNotifySeats, TicketNotifier.NOTIFICATION_TYPE.PAYMENT_NOTIFICATION);
+			}
+		});
+		
+		JButton sendTicketRevocation = new JButton("Ticketschredder");
+		ticketNotifyPanel.add(sendTicketRevocation);
+		
+		sendTicketRevocation.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				handleNotificationClick(ticketNotifySeats, TicketNotifier.NOTIFICATION_TYPE.TICKET_REVOCATION);
+			}
+		});
+		
+		tabPanel.addTab("Ticket BackOffice", ticketNotifyPanel);
+		
 		//************ event panel *************
 		JPanel eventPanel = new JPanel();
 		eventPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 10));
@@ -219,10 +250,35 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 		
 		updatePendingTicketsLabel(null);
 		
-		setSize(520, 210);
+		setSize(520, 190);
 		setLocationRelativeTo(null);
-		setResizable(true);
+		setResizable(false);
 		setVisible(true);
+	}
+	
+	private void handleNotificationClick(JTextField ticketNotifySeats, TicketNotifier.NOTIFICATION_TYPE notificationType){
+		List<Pair<String, String>> seats;
+		
+		//check seats
+		if (isFilled(ticketNotifySeats)){
+			seats = SeatTokenizer.parseSeats(ticketNotifySeats.getText());
+			
+			TicketNotifier ticketNotifier = new TicketNotifier(new ITicketProcessFailed() {
+				@Override
+				public boolean handleFailedState(String message, Exception cause) {
+					showErrorDialog(message);
+					return false;
+				}
+			});
+			
+			boolean sendSuccessFull = ticketNotifier.sendNotification(seats, notificationType);
+			if (sendSuccessFull){
+				showInfoDialog("Geschafft", "Nachricht wurde verschickt.");
+			}
+		}else{
+			showErrorDialog("NoNoNo, so nicht. Du hast da keinen sitzen.");
+			return;
+		}
 	}
 	
 	private void updatePendingTicketsLabel(Map<String, CodeData> codeList){
@@ -270,6 +326,10 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 		//set focus to input field
 		ticketCode.grabFocus();
 	}
+	
+	
+	
+	
 	
 	private void checkTicketCode(JTextField ticketCode){
 		if (ticketCode.getText() == null || ticketCode.getText().length() == 0){

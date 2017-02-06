@@ -10,10 +10,29 @@ public class EmailTemplate {
 	private static String TEMPLATE_PLACEHOLDER_NAME = "%%name%%";
 	private static String TEMPLATE_PLACEHOLDER_PRICE = "%%price%%";
 	
+	public static enum TEMPLATES {
+		TICKET_TEMPLATE(PropertyHandler.PROP_EMAIL_TEMPLATE_FILE),
+		NOTIFICATION_TEMPLATE(PropertyHandler.PROP_EMAIL_NOTIFICATION_TEMPLATE_FILE),
+		REVOCATION_TEMPLATE(PropertyHandler.PROP_EMAIL_REVOCATION_TEMPLATE_FILE);
+		
+		private String prop;
+		
+		TEMPLATES(String prop){
+			this.prop = prop;
+		}
+		
+		String getProp(){
+			return prop;
+		}
+	}
+	
 	private String templateText;
 	
-	public static EmailTemplate loadTemplate() throws IOException{
-		String emailTemplateFile = PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_EMAIL_TEMPLATE_FILE);
+	public static EmailTemplate loadTemplate(TEMPLATES template) throws IOException{
+		String emailTemplateFile = PropertyHandler.getInstance().getPropertyString(template.getProp());
+		if (emailTemplateFile == null){
+			throw new IllegalArgumentException("missing template configuration");
+		}
 		File f = new File(emailTemplateFile);
 		if (f.exists()){
 			return new EmailTemplate(new String(Files.readAllBytes(f.toPath()), "ISO8859-1"));
