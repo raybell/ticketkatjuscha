@@ -240,7 +240,7 @@ public class TicketExpert {
 		//generate email
 		logWriter.println("Sending email notification...");
 		try {
-			String emailText = EmailTemplate.loadTemplate(TEMPLATES.TICKET_TEMPLATE).evaluateEmailText(ownerName, amountOfTickets);
+			String emailText = EmailTemplate.loadTemplate(TEMPLATES.TICKET_TEMPLATE).evaluateEmailText(ownerName, amountOfTickets, null);
 			EmailTransmitter.transmitEmail(emailText, ticketFiles, emailRecipient);
 		} catch (IOException | EmailTransmissionException e) {
 			logWriter.print("Problääääm. Could not send the email notification: " + e.getMessage() + ". But your tickets were generated, so check the output-directory.");

@@ -95,7 +95,7 @@ public class CodeGenerator {
 			//we already know this code, try to create a new one
 			return generateNewCode();
 		}else{
-			return new Ticket(newCode, new CodeData(generateCheckCode(), owner, new AdditionalCodeData()));
+			return new Ticket(newCode, new CodeData(newCode, generateCheckCode(), owner, new AdditionalCodeData()));
 		}
 	}
 	

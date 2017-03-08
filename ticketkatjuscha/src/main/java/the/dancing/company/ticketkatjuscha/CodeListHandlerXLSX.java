@@ -40,7 +40,7 @@ public class CodeListHandlerXLSX implements ICodeListHandler{
 				
 				for (int i = 1; i <= sheet.getLastRowNum(); i++) {
 					Row row = sheet.getRow(i);
-					codeList.put("" + row.getCell(0), new CodeData("" + row.getCell(1), "" + row.getCell(2), null));
+					codeList.put("" + row.getCell(0), new CodeData("" + row.getCell(0), "" + row.getCell(1), "" + row.getCell(2), null));
 				} 
 			}catch(InvalidFormatException e){
 				throw new IOException(e);

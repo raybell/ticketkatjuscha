@@ -9,6 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 public class EmailTemplate {
 	private static String TEMPLATE_PLACEHOLDER_NAME = "%%name%%";
 	private static String TEMPLATE_PLACEHOLDER_PRICE = "%%price%%";
+	private static String TEMPLATE_PLACEHOLDER_SEATS = "%%seats%%";
 	
 	public static enum TEMPLATES {
 		TICKET_TEMPLATE(PropertyHandler.PROP_EMAIL_TEMPLATE_FILE),
@@ -45,9 +46,10 @@ public class EmailTemplate {
 		this.templateText = templateText;
 	}
 	
-	public String evaluateEmailText(String recipientName, int ticketAmount){
+	public String evaluateEmailText(String recipientName, int ticketAmount, String seats){
 		return this.templateText.replaceAll(TEMPLATE_PLACEHOLDER_NAME, StringUtils.splitByWholeSeparator(recipientName, StringUtils.SPACE)[0].trim())
-		                        .replaceAll(TEMPLATE_PLACEHOLDER_PRICE, "" + PropertyHandler.getInstance().getPropertyInt(PropertyHandler.PROP_TICKET_PRICE) * ticketAmount);
+		                        .replaceAll(TEMPLATE_PLACEHOLDER_PRICE, "" + PropertyHandler.getInstance().getPropertyInt(PropertyHandler.PROP_TICKET_PRICE) * ticketAmount)
+		                        .replaceAll(TEMPLATE_PLACEHOLDER_SEATS, seats == null ? "" : seats);
 	}
 	
 }

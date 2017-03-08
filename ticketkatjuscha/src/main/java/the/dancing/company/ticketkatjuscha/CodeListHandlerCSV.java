@@ -40,7 +40,7 @@ public class CodeListHandlerCSV implements ICodeListHandler{
 				//ignore the first line (headers)
 				reader.readNext();
 				while ((nextLine = reader.readNext()) != null) {
-					codeList.put("" + nextLine[0], new CodeData(nextLine[1], nextLine[2], loadAdditionalCodeData(nextLine, 3)));
+					codeList.put(nextLine[0], new CodeData(nextLine[0], nextLine[1], nextLine[2], loadAdditionalCodeData(nextLine, 3)));
 				}
 			}
 		}

@@ -3,6 +3,7 @@ package the.dancing.company.ticketkatjuscha;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -89,10 +90,10 @@ public class TicketNotifier {
 			try {
 				switch(notificationType){
 					case PAYMENT_NOTIFICATION:
-						emailtext = EmailTemplate.loadTemplate(TEMPLATES.NOTIFICATION_TEMPLATE).evaluateEmailText(codeData.getName(), seats.size());
+						emailtext = EmailTemplate.loadTemplate(TEMPLATES.NOTIFICATION_TEMPLATE).evaluateEmailText(codeData.getName(), foundCodes.size(), null);
 						break;
 					case TICKET_REVOCATION:
-						emailtext = EmailTemplate.loadTemplate(TEMPLATES.REVOCATION_TEMPLATE).evaluateEmailText(codeData.getName(), seats.size());
+						emailtext = EmailTemplate.loadTemplate(TEMPLATES.REVOCATION_TEMPLATE).evaluateEmailText(codeData.getName(), foundCodes.size(), makeSeatList(foundCodes));
 						break;
 				}
 				String recipient = codeData.getAdditionalCodeData().getData(ADDITIONAL_DATA.TICKET_EMAIL);
@@ -137,4 +138,28 @@ public class TicketNotifier {
 		
 		return failureHandler.handleFailedState(message, e);
 	}
+	
+	private String makeSeatList(Set<CodeData> ticketCodes){
+		StringBuffer sb = new StringBuffer();
+		
+		//sort by seat
+		Iterator<CodeData> ticketCodesIt = ticketCodes.stream()
+		                                              .sorted((t1, t2) -> t1.getAdditionalCodeData().getData(ADDITIONAL_DATA.TICKET_SEAT)
+		                                                      .compareTo(t2.getAdditionalCodeData().getData(ADDITIONAL_DATA.TICKET_SEAT))).iterator();
+		while (ticketCodesIt.hasNext()){
+			CodeData codeData = ticketCodesIt.next();
+			if (sb.length() > 0){
+				sb.append(", ");
+			}
+			sb.append(codeData.getAdditionalCodeData().getData(ADDITIONAL_DATA.TICKET_SEAT));
+			sb.append(" (Code: \"");
+			sb.append(codeData.getCode());
+			sb.append("\"; Checkcode: \"");
+			sb.append(codeData.getCheckCode());
+			sb.append("\")");
+		}
+		
+		return sb.toString();
+	}
+	
 }
