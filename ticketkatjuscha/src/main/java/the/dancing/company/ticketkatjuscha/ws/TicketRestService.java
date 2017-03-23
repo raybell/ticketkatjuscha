@@ -24,12 +24,19 @@ public class TicketRestService {
 	@GET
 	@Path("/maketicket")
 	@Produces("text/plain")
-	public Response makeTicket(@QueryParam("amount") int amount, @QueryParam("name") String name, @QueryParam("seats") String seats, @QueryParam("recipient") String recipient) {
+	public Response makeTicket(@QueryParam("amount") int amount, @QueryParam("name") String name, @QueryParam("seats") String seats, @QueryParam("recipient") String recipient, @QueryParam("price") String price) {
 		StringBuilder response = new StringBuilder();
 		if (amount > 0){
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			try{
-				boolean ticketsGenerated = new TicketExpert(amount, name, SeatTokenizer.parseSeats(seats), recipient).process(new ITicketProcessFailed() {
+				int iPrice = -1;
+				try {
+					iPrice = Integer.parseInt(price);
+				} catch (Exception e) {
+					//ignore, use default
+				}
+
+				boolean ticketsGenerated = new TicketExpert(amount, name, SeatTokenizer.parseSeats(seats), recipient, iPrice).process(new ITicketProcessFailed() {
 					@Override
 					public boolean handleFailedState(String message, Exception cause) {
 						response.append("Bigga bigga problem.\n");
@@ -65,21 +72,21 @@ public class TicketRestService {
 		}
 		return Response.status(200).entity(response.toString()).build();
 	}
-	
+
 	@GET
 	@Path("/sendPaymentReminder")
 	@Produces("text/plain")
 	public Response sendPaymentReminder(@QueryParam("seats") String seats) {
 		return sendTicketNotification(seats, NOTIFICATION_TYPE.PAYMENT_NOTIFICATION);
 	}
-	
+
 	@GET
 	@Path("/sendTicketRevocation")
 	@Produces("text/plain")
 	public Response sendTicketRevocation(@QueryParam("seats") String seats) {
 		return sendTicketNotification(seats, NOTIFICATION_TYPE.TICKET_REVOCATION);
 	}
-	
+
 	@GET
 	@Path("/restart")
 	@Produces("text/plain")
@@ -98,17 +105,17 @@ public class TicketRestService {
 		}.start();
 		return Response.status(200).entity("restarting in 5s... stay tuned and wait for the magic...").build();
 	}
-	
+
 	@GET
 	@Path("/version")
 	@Produces("text/plain")
 	public Response getProgVersion(){
 		return Response.status(200).entity(Toolbox.getProgVersion()).build();
 	}
-	
+
 	private Response sendTicketNotification(String seats, NOTIFICATION_TYPE type){
 		StringBuilder response = new StringBuilder();
-		
+
 		TicketNotifier ticketNotifier = new TicketNotifier(new ITicketProcessFailed() {
 			@Override
 			public boolean handleFailedState(String message, Exception cause) {
@@ -122,13 +129,13 @@ public class TicketRestService {
 				return false;
 			}
 		});
-		
+
 		boolean sendNotification = ticketNotifier.sendNotification(SeatTokenizer.parseSeats(seats), type);
-		
+
 		if (sendNotification){
 			response.append("Successfully sent " + type.getName() + " to " + ticketNotifier.getLastRecipient());
 		}
-		
+
 		return Response.status(200).entity(response.toString()).build();
 	}
 }

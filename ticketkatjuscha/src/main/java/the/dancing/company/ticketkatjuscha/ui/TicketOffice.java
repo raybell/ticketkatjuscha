@@ -48,55 +48,62 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 
 	private JLabel pendingTicketLabel;
 	private JCheckBox toggleCheckBox;
-	
-	
+
+
 	public TicketOffice(){
 		super("Ticket Katjuscha");
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
-		
+
 		JTabbedPane tabPanel = new JTabbedPane();
-		
+
 		//******** office panel ********
 		JPanel filler20 = new JPanel();
 		filler20.setPreferredSize(new Dimension(20, 1));
-		
+
 		JPanel filler500 = new JPanel();
 		filler500.setPreferredSize(new Dimension(500, 5));
-		
+
 		JPanel officePanel = new JPanel();
 		officePanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 10));
-		
+
 		officePanel.add(filler500);
 		officePanel.add(filler20);
-		
+
 		JLabel lTicketAmount = new JLabel("Wieviel?");
 		officePanel.add(lTicketAmount);
 		JTextField tfTicketAmount = new JTextField(3);
 		officePanel.add(tfTicketAmount);
-		
+
 		JLabel lTicketOwner = new JLabel("Für wen?");
 		officePanel.add(lTicketOwner);
 		JTextField tfTicketOwner = new JTextField(7);
 		officePanel.add(tfTicketOwner);
-		
+
 		JLabel lTicketRecipient = new JLabel("Wohin?");
 		officePanel.add(lTicketRecipient);
 		JTextField tfTicketRecipient = new JTextField(7);
 		officePanel.add(tfTicketRecipient);
-		
+
 		officePanel.add(filler20);
-		
+
+		JLabel lTicketPrice = new JLabel("Preis (leer für Standardpreis " + PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_PRICE) + "Euro)?");
+		officePanel.add(lTicketPrice);
+		JTextField tfTTicketPrice = new JTextField(7);
+		officePanel.add(tfTTicketPrice);
+
+		officePanel.add(filler20);
+
 		JPanel seatPanel = new JPanel();
 		seatPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 1, 1));
-		
+
 		JLabel lSeats = new JLabel("Sitzplätze (Format: Reihe1.Sitz1,Reihe2.Sitz2)");
 		officePanel.add(lSeats);
 		JTextField tfSeats = new JTextField(20);
 		officePanel.add(tfSeats);
-		
+
 		JButton makeTickets = new JButton("Gib's mir");
 		officePanel.add(makeTickets);
-		
+
 		makeTickets.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -132,8 +139,15 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 					showErrorDialog("Wie heißt der Sack / die Säckin?");
 					return;
 				}
-				
-				if (new TicketExpert(ticketAmount, tfTicketOwner.getText(), seats, tfTicketRecipient.getText()).process(new ITicketProcessFailed() {
+
+				int price = -1;
+				try {
+					price = Integer.parseInt(tfTTicketPrice.getText());
+				} catch (NumberFormatException e1) {
+					//ignore
+				}
+
+				if (new TicketExpert(ticketAmount, tfTicketOwner.getText(), seats, tfTicketRecipient.getText(), price).process(new ITicketProcessFailed() {
 					@Override
 					public boolean handleFailedState(String message, Exception cause) {
 						showErrorDialog("Huiuiuiui sagt die UI, da ging wohl was in die Hose.\nNachricht: " + message + (cause != null ? "\n\nInfos vom Verursacher: " + cause.toString() : "" ) + "\n\nMehr auf der Konsole...");
@@ -145,7 +159,7 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 			}
 		});
 		tabPanel.addTab("Ticket Office", officePanel);
-		
+
 		//************ ticket notification panel *************
 		JPanel ticketNotifyPanel = new JPanel();
 		ticketNotifyPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 10));
@@ -153,29 +167,29 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 		ticketNotifyPanel.add(ticketNotifySeatsLabel);
 		JTextField ticketNotifySeats = new JTextField(20);
 		ticketNotifyPanel.add(ticketNotifySeats);
-		
+
 		JButton sendPaymentNotification = new JButton("Zahlungserinnerung");
 		ticketNotifyPanel.add(sendPaymentNotification);
-		
+
 		sendPaymentNotification.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				handleNotificationClick(ticketNotifySeats, TicketNotifier.NOTIFICATION_TYPE.PAYMENT_NOTIFICATION);
 			}
 		});
-		
+
 		JButton sendTicketRevocation = new JButton("Ticketschredder");
 		ticketNotifyPanel.add(sendTicketRevocation);
-		
+
 		sendTicketRevocation.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				handleNotificationClick(ticketNotifySeats, TicketNotifier.NOTIFICATION_TYPE.TICKET_REVOCATION);
 			}
 		});
-		
+
 		tabPanel.addTab("Ticket BackOffice", ticketNotifyPanel);
-		
+
 		//************ event panel *************
 		JPanel eventPanel = new JPanel();
 		eventPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 10));
@@ -198,7 +212,7 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 			}
 		});
 		eventPanel.add(ticketCode);
-		
+
 		JButton checkCodeButton = new JButton("Check code");
 		checkCodeButton.addActionListener(new ActionListener() {
 			@Override
@@ -207,10 +221,10 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 			}
 		});
 		eventPanel.add(checkCodeButton);
-		
+
 		pendingTicketLabel = new JLabel();
 		eventPanel.add(pendingTicketLabel);
-		
+
 		toggleCheckBox = new JCheckBox("Toggle y/z (scanner mode)");
 		toggleCheckBox.setSelected(true);
 		toggleCheckBox.addChangeListener(new ChangeListener() {
@@ -220,10 +234,10 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 			}
 		});
 		eventPanel.add(toggleCheckBox);
-		
+
 		JLabel explainLabel = new JLabel("<html>Das Eingabefeld unterstützt zwei Verifizierungsmethoden.<br>Automatisch: Eingabe von Ticketcode + Prüfcode durch Leerzeichen getrennt.<br>Manuell: Eingabe des Ticketcodes + manueller Verifizierung des Prüfcodes.</html>");
 		eventPanel.add(explainLabel);
-		
+
 		tabPanel.addTab("Event mode", eventPanel);
 		tabPanel.addChangeListener(new ChangeListener() {
 			@Override
@@ -238,31 +252,31 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 			@Override
 			public void focusLost(FocusEvent e) {
 			}
-			
+
 			@Override
 			public void focusGained(FocusEvent e) {
 				//always set focus back to input field (to support flawless scanner usage)
 				ticketCode.grabFocus();
 			}
 		});
-		
+
 		add(tabPanel);
-		
+
 		updatePendingTicketsLabel(null);
-		
-		setSize(520, 190);
+
+		setSize(520, 210);
 		setLocationRelativeTo(null);
 		setResizable(false);
 		setVisible(true);
 	}
-	
+
 	private void handleNotificationClick(JTextField ticketNotifySeats, TicketNotifier.NOTIFICATION_TYPE notificationType){
 		List<Pair<String, String>> seats;
-		
+
 		//check seats
 		if (isFilled(ticketNotifySeats)){
 			seats = SeatTokenizer.parseSeats(ticketNotifySeats.getText());
-			
+
 			TicketNotifier ticketNotifier = new TicketNotifier(new ITicketProcessFailed() {
 				@Override
 				public boolean handleFailedState(String message, Exception cause) {
@@ -270,7 +284,7 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 					return false;
 				}
 			});
-			
+
 			boolean sendSuccessFull = ticketNotifier.sendNotification(seats, notificationType);
 			if (sendSuccessFull){
 				showInfoDialog("Geschafft", "Nachricht wurde verschickt.");
@@ -280,7 +294,7 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 			return;
 		}
 	}
-	
+
 	private void updatePendingTicketsLabel(Map<String, CodeData> codeList){
 		if (codeList == null){
 			ICodeListHandler codeListHandler = CodeListHandlerFactory.produceHandler();
@@ -291,14 +305,14 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 				return;
 			}
 		}
-		
+
 		this.pendingTicketLabel.setText(pendingTicketsDisplay(codeList));
 	}
-	
+
 	private static String pendingTicketsDisplay(Map<String, CodeData> codeList){
 		int allValidTickets = 0;
 		int invalidateTickets = 0;
-		
+
 		for (CodeData codeData : codeList.values()) {
 			if (!codeData.getAdditionalCodeData().getDataAsBoolean(ADDITIONAL_DATA.TICKET_WITHDRAWED)){
 				allValidTickets++;
@@ -309,34 +323,34 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 		}
 		return invalidateTickets + "/" + allValidTickets;
 	}
-	
+
 	private static int calculateMaxCodeLength(){
 		int maxCodeLength = PropertyHandler.getInstance().getPropertyInt(PropertyHandler.PROP_MAX_CODE_DIGITS)
 							+ PropertyHandler.getInstance().getPropertyInt(PropertyHandler.PROP_MAX_CHECKCODE_DIGITS)
 							+ 1;
 		return maxCodeLength > 1 ? maxCodeLength : 10;
 	}
-	
+
 	private void checkTicketCodeHandler(JTextField ticketCode){
 		checkTicketCode(ticketCode);
-		
+
 		//clear text
 		ticketCode.setText("");
-		
+
 		//set focus to input field
 		ticketCode.grabFocus();
 	}
-	
-	
-	
-	
-	
+
+
+
+
+
 	private void checkTicketCode(JTextField ticketCode){
 		if (ticketCode.getText() == null || ticketCode.getText().length() == 0){
 			showErrorDialog("If you give me a ticket code, i will verify it for you.");
 			return;
 		}
-		
+
 		//load ticket codes
 		ICodeListHandler codeListHandler = CodeListHandlerFactory.produceHandler();
 		Map<String, CodeData> codeList = null;
@@ -346,7 +360,7 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 			showErrorDialog(e.getMessage());
 			return;
 		}
-		
+
 		//check it
 		String inputCode = null;
 		String inputCheckcode = null;
@@ -355,23 +369,23 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 		if (inputTokenizer.hasMoreTokens()){
 			inputCheckcode = inputTokenizer.nextToken();
 		}
-		
+
 		CodeData codeData = codeList.get(inputCode);
 		if (codeData == null){
 			showInfoDialogForInvalidTicket("Ungültiger code", "Konnte den Code %s nicht in der Codeliste finden.", inputCode);
 			return;
 		}
-		
+
 		if (codeData.getAdditionalCodeData().getDataAsBoolean(ADDITIONAL_DATA.TICKET_WITHDRAWED)){
 			showInfoDialogForInvalidTicket("Ungültiges Ticket", "Das Ticket mit dem Code %s ist leider ungültig.", inputCode);
 			return;
 		}
-		
+
 		if (codeData.getAdditionalCodeData().getDataAsBoolean(ADDITIONAL_DATA.TICKET_INVALIDATED)){
 			showInfoDialogForInvalidTicket("Ungültiges Ticket", "Das Ticket mit dem Code %s wurde bereits entwerted am " + codeData.getAdditionalCodeData().getData(ADDITIONAL_DATA.TICKET_INVALIDATION_TIMESTAMP), inputCode);
 			return;
 		}
-		
+
 		if (inputCheckcode == null || inputCheckcode.trim().length() == 0){
 			//no checkcode provided, but code is valid so far
 			if (showYesNoDialog("Prüfcode prüfen", "Der Code %s ist gültig. Der dazugehörige Prüfcode lautet: %s<br>Korrekt?", inputCode, codeData.getCheckCode()) == JOptionPane.NO_OPTION){
@@ -387,12 +401,12 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 				return;
 			}
 		}
-		
+
 		//seems the ticket is valid
 		codeData.getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_INVALIDATED, "1");
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 		codeData.getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_INVALIDATION_TIMESTAMP, sdf.format(new Date()));
-		
+
 		//update code list
 		try {
 			codeListHandler.saveCodeList(codeList);
@@ -400,62 +414,62 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 			showErrorDialog(e.getMessage());
 			return;
 		}
-		
+
 		showInfoDialog("Gültiges Ticket", "Das Ticket mit dem Code " + inputCode + " ist gültig und wurde entwertet.");
-		
+
 		updatePendingTicketsLabel(codeList);
 	}
-	
+
 	private static boolean isFilled(JTextField textField){
 		return textField.getText() != null && textField.getText().trim().length() > 0;
 	}
-	
+
 	private void showErrorDialog(String message){
 		new JOptionPane(breakTheLineIfNotBreakedYet(message)).createDialog(TicketOffice.this, "Da stimmt was nicht").setVisible(true);
 	}
-	
+
 	private void showInfoDialog(String title, String message){
 		new JOptionPane(breakTheLineIfNotBreakedYet(message)).createDialog(TicketOffice.this, title).setVisible(true);
 	}
-	
+
 	private void showInfoDialogForInvalidTicket(String title, String message, String... params){
 		setOptionPaneBackground(Color.RED);
 		JOptionPane.showMessageDialog(this, makeHTMLMessage(message, params), title, JOptionPane.WARNING_MESSAGE );
 		resetOptionPaneBackground();
 	}
-	
+
 	private int showYesNoDialog(String title, String message, String... params){
 		return JOptionPane.showOptionDialog(this, makeHTMLMessage(message, params), title, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
 	}
-	
+
 	private static String makeHTMLMessage(String message, String... params){
 		StringWriter sw = new StringWriter();
 		sw.append("<html>");
-		
+
 		String[] messageParams = new String[params.length];
 		for (int i=0;i<params.length;i++) {
 			messageParams[i] = "<span style='font-size:larger;'>" + params[i] + "</span>";
 		}
-		
+
 		sw.append(String.format(message, messageParams));
 		sw.append("</html>");
 		return sw.toString();
 	}
-	
+
 	private static void resetOptionPaneBackground(){
 		UIManager.put("OptionPane.background", null);
 		UIManager.put("Panel.background", null);
 	}
-	
+
 	private static void setOptionPaneBackground(Color color){
 		UIManager.put("OptionPane.background", color);
 		UIManager.put("Panel.background", color);
 	}
-	
+
 	private static String breakTheLineIfNotBreakedYet(String message){
 		int maxLength = 100;
 		StringBuilder sb = new StringBuilder(message);
-		
+
 		for(int i=maxLength; i<message.length(); i+=maxLength){
 			int lb = sb.substring(i-maxLength, i-1).indexOf("\n");
 			if (lb > -1){

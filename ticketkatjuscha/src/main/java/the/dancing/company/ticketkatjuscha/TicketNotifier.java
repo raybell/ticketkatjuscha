@@ -19,27 +19,27 @@ import the.dancing.company.ticketkatjuscha.util.SeatTokenizer;
 
 /**
  * Handle ticket related notifications.
- * 
+ *
  * @author marcel
  */
 public class TicketNotifier {
 	public static enum NOTIFICATION_TYPE{
 		PAYMENT_NOTIFICATION("payment reminder"),
 		TICKET_REVOCATION("ticket revocation");
-		
+
 		private String name;
 		NOTIFICATION_TYPE(String name){
 			this.name = name;
 		}
-		
+
 		public String getName(){
 			return name;
 		}
 	};
-	
+
 	private ITicketProcessFailed failureHandler;
 	private String lastRecipient;
-	
+
 	public TicketNotifier(ITicketProcessFailed failureHandler){
 		this.failureHandler = failureHandler;
 	}
@@ -55,7 +55,7 @@ public class TicketNotifier {
 			} catch (IOException e) {
 				return terminateWithError(e.getMessage(), e);
 			}
-			
+
 			//get assigned email addresses
 			Map<String, CodeData> foundEmails = new HashMap<>();
 			Set<CodeData> foundCodes = new HashSet<>();
@@ -72,7 +72,7 @@ public class TicketNotifier {
 					}
 				}
 			}
-			
+
 			if (foundEmails.size() == 0){
 				//no emails found
 				return terminateWithError("no email addresses found", null);
@@ -82,24 +82,29 @@ public class TicketNotifier {
 				//ambigious email addresses found
 				return terminateWithError("found more than one email address associated with the seats. please check the codelist.", null);
 			}
-			
+
 			//generate email text and send email
 			CodeData codeData = foundEmails.entrySet().iterator().next().getValue();
 			String emailtext = "";
-			
+
+			int price = codeData.getAdditionalCodeData().getDataAsInt(ADDITIONAL_DATA.TICKET_PRICE);
+			if (price <= 0){
+				price = PropertyHandler.getInstance().getPropertyInt(PropertyHandler.PROP_TICKET_PRICE);
+			}
+
 			try {
 				switch(notificationType){
 					case PAYMENT_NOTIFICATION:
-						emailtext = EmailTemplate.loadTemplate(TEMPLATES.NOTIFICATION_TEMPLATE).evaluateEmailText(codeData.getName(), foundCodes.size(), null);
+						emailtext = EmailTemplate.loadTemplate(TEMPLATES.NOTIFICATION_TEMPLATE).evaluateEmailText(codeData.getName(), foundCodes.size(), null, price);
 						break;
 					case TICKET_REVOCATION:
-						emailtext = EmailTemplate.loadTemplate(TEMPLATES.REVOCATION_TEMPLATE).evaluateEmailText(codeData.getName(), foundCodes.size(), makeSeatList(foundCodes));
+						emailtext = EmailTemplate.loadTemplate(TEMPLATES.REVOCATION_TEMPLATE).evaluateEmailText(codeData.getName(), foundCodes.size(), makeSeatList(foundCodes), price);
 						break;
 				}
 				String recipient = codeData.getAdditionalCodeData().getData(ADDITIONAL_DATA.TICKET_EMAIL);
 				EmailTransmitter.transmitEmail(emailtext, null, recipient);
 				lastRecipient = recipient;
-				
+
 				//message specific post-processing
 				switch(notificationType){
 					case PAYMENT_NOTIFICATION:
@@ -118,30 +123,30 @@ public class TicketNotifier {
 				}
 			} catch (IOException | EmailTransmissionException e) {
 				return terminateWithError("Beim Versenden der eMail ist ein unerwarteter Fehler aufgetreten: " + e.getMessage(), e);
-			} 
+			}
 			return true;
 		} catch (NoSuchElementException e1) {
 			return terminateWithError("NoNoNo, so nicht. Das sind ja ganz merkwürdige Sitze.", e1);
 		}
 	}
-	
+
 	public String getLastRecipient(){
 		return this.lastRecipient;
 	}
-	
+
 	private boolean terminateWithError(String message, Exception e){
 		System.err.println(message);
 		if (e != null){
 			System.err.println("Info: " + e.toString());
 			e.printStackTrace(System.err);
 		}
-		
+
 		return failureHandler.handleFailedState(message, e);
 	}
-	
+
 	private String makeSeatList(Set<CodeData> ticketCodes){
 		StringBuffer sb = new StringBuffer();
-		
+
 		//sort by seat
 		Iterator<CodeData> ticketCodesIt = ticketCodes.stream()
 		                                              .sorted((t1, t2) -> t1.getAdditionalCodeData().getData(ADDITIONAL_DATA.TICKET_SEAT)
@@ -158,8 +163,8 @@ public class TicketNotifier {
 			sb.append(codeData.getCheckCode());
 			sb.append("\")");
 		}
-		
+
 		return sb.toString();
 	}
-	
+
 }

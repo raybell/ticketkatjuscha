@@ -23,7 +23,7 @@ public class CodeGenerator {
 	private Map<String, CodeData> codeList;
 	private Map<String, CodeData> seatMap;
 	private ICodeListHandler codeListHandler;
-	
+
 	public CodeGenerator(String owner) throws GeneratorException{
 		this.owner = owner;
 		this.codeListHandler = CodeListHandlerFactory.produceHandler();
@@ -35,13 +35,14 @@ public class CodeGenerator {
 		}
 	}
 
-	public HashMap<String, CodeData> generateNewTicketCodes(int amount, List<Pair<String, String>> seats, String emailRecipient) throws GeneratorException{
+	public HashMap<String, CodeData> generateNewTicketCodes(int amount, List<Pair<String, String>> seats, String emailRecipient, int price) throws GeneratorException{
 		try {
 			HashMap<String, CodeData> newCodeList = new HashMap<>();
 			for (int i = 0; i < amount; i++) {
 				Ticket newTicket = generateNewCode();
 				newTicket.getCodeData().getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_SEAT, SeatTokenizer.makeSeatToken(seats.get(i)));
 				newTicket.getCodeData().getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_EMAIL, emailRecipient);
+				newTicket.getCodeData().getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_PRICE, "" + price);
 				newCodeList.put(newTicket.getCode(), newTicket.getCodeData());
 				codeList.put(newTicket.getCode(), newTicket.getCodeData());
 			}
@@ -50,24 +51,24 @@ public class CodeGenerator {
 			throw new GeneratorException(e);
 		}
 	}
-	
+
 	public void writeTicketCodes() throws GeneratorException{
 		if (codeList.size() == 0){
 			//nothing to save
 			return;
 		}
-		
+
 		try {
 			//backup old codelist
 			backupCurrentCodelist(this.codeListHandler.getFileName());
-			
+
 			//create new codelist
 			this.codeListHandler.saveCodeList(this.codeList);
 		} catch (EncryptedDocumentException | IOException e) {
 			throw new GeneratorException(e);
-		} 
+		}
 	}
-	
+
 	public boolean checkIfSeatsAreFree(List<Pair<String, String>> seats){
 		if (seatMap == null){
 			//fill the map with seats
@@ -87,7 +88,7 @@ public class CodeGenerator {
 		}
 		return true;
 	}
-	
+
 	private Ticket generateNewCode(){
 		int maxCodeDigits = PropertyHandler.getInstance().getPropertyInt(PropertyHandler.PROP_MAX_CODE_DIGITS);
 		String newCode = String.format("%0" +  maxCodeDigits + "d", Math.round(Math.random() * (Math.pow(10, maxCodeDigits))));
@@ -98,7 +99,7 @@ public class CodeGenerator {
 			return new Ticket(newCode, new CodeData(newCode, generateCheckCode(), owner, new AdditionalCodeData()));
 		}
 	}
-	
+
 	private String generateCheckCode(){
 		int maxCheckcodeDigits = PropertyHandler.getInstance().getPropertyInt(PropertyHandler.PROP_MAX_CHECKCODE_DIGITS);
 		StringBuilder checkCode = new StringBuilder();
@@ -107,7 +108,7 @@ public class CodeGenerator {
 		}
 		return checkCode.toString();
 	}
-	
+
 	private void backupCurrentCodelist(String codeListName){
 		File codeListFile = new File(codeListName);
 		if (codeListFile.exists()){

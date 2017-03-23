@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Properties;
 
@@ -21,7 +22,7 @@ public class PropertyHandler {
 	public static final String PROP_EMAIL_TEMPLATE_FILE = "emailTemplateBodyFile";
 	public static final String PROP_EMAIL_NOTIFICATION_TEMPLATE_FILE = "emailNotificationTemplateBodyFile";
 	public static final String PROP_EMAIL_REVOCATION_TEMPLATE_FILE = "emailRevocationTemplateBodyFile";
-	
+
 	public static final String PROP_EMAIL_TEMPLATE_SUBJECT = "emailTemplateSubject";
 	public static final String PROP_EMAIL_HOST = "mail.smtp.host";
 	public static final String PROP_EMAIL_USER = "mail.smtp.user";
@@ -38,7 +39,7 @@ public class PropertyHandler {
 		{PROP_CODELIST_BACKUP_DIR, "backup"},
 		{PROP_SERVER_PORT, "9998"}
 	};
-	
+
 	private static final String PROP_FILENAME = "katjuscha.properties";
 	private static final HashMap<String, String> PROP_DEFAULT_HASH;
 	static{
@@ -49,7 +50,7 @@ public class PropertyHandler {
 	}
 	private Properties props;
 	private static PropertyHandler propHandler;
-	
+
 	//******** singleton access **********
 	public static PropertyHandler getInstance(){
 		if (propHandler == null){
@@ -57,13 +58,13 @@ public class PropertyHandler {
 		}
 		return propHandler;
 	}
-	
+
 	public static void persist(){
 		if (propHandler != null){
 			propHandler.saveProperties();
 		}
 	}
-	
+
 	public static void load(){
 		getInstance().loadProperties();
 	}
@@ -71,7 +72,7 @@ public class PropertyHandler {
 	private PropertyHandler(){
 		loadProperties();
 	}
-	
+
 	private void loadProperties(){
 		props = new Properties();
 		File propFile = new File(PROP_FILENAME);
@@ -87,7 +88,7 @@ public class PropertyHandler {
 			//no props, use default
 		}
 	}
-	
+
 	private void saveProperties(){
 		FileOutputStream out = null;
 		try {
@@ -106,7 +107,7 @@ public class PropertyHandler {
 			}
 		}
 	}
-	
+
 	private String getAndSetDefault(String propName){
 		if (PROP_DEFAULT_HASH.containsKey(propName)){
 			String propValue = PROP_DEFAULT_HASH.get(propName);
@@ -116,7 +117,7 @@ public class PropertyHandler {
 			return null;
 		}
 	}
-	
+
 	//**************** instance access ************
 	public String getPropertyString(String propName){
 		if (props.containsKey(propName)){
@@ -125,7 +126,7 @@ public class PropertyHandler {
 			return getAndSetDefault(propName);
 		}
 	}
-	
+
 	public int getPropertyInt(String propName){
 		if (props.containsKey(propName)){
 			return Integer.parseInt(props.getProperty(propName));

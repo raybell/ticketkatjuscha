@@ -10,25 +10,25 @@ public class EmailTemplate {
 	private static String TEMPLATE_PLACEHOLDER_NAME = "%%name%%";
 	private static String TEMPLATE_PLACEHOLDER_PRICE = "%%price%%";
 	private static String TEMPLATE_PLACEHOLDER_SEATS = "%%seats%%";
-	
+
 	public static enum TEMPLATES {
 		TICKET_TEMPLATE(PropertyHandler.PROP_EMAIL_TEMPLATE_FILE),
 		NOTIFICATION_TEMPLATE(PropertyHandler.PROP_EMAIL_NOTIFICATION_TEMPLATE_FILE),
 		REVOCATION_TEMPLATE(PropertyHandler.PROP_EMAIL_REVOCATION_TEMPLATE_FILE);
-		
+
 		private String prop;
-		
+
 		TEMPLATES(String prop){
 			this.prop = prop;
 		}
-		
+
 		String getProp(){
 			return prop;
 		}
 	}
-	
+
 	private String templateText;
-	
+
 	public static EmailTemplate loadTemplate(TEMPLATES template) throws IOException{
 		String emailTemplateFile = PropertyHandler.getInstance().getPropertyString(template.getProp());
 		if (emailTemplateFile == null){
@@ -41,15 +41,15 @@ public class EmailTemplate {
 			throw new IOException("template file '" + f.getAbsolutePath() + "' not found");
 		}
 	}
-	
+
 	public EmailTemplate(String templateText){
 		this.templateText = templateText;
 	}
-	
-	public String evaluateEmailText(String recipientName, int ticketAmount, String seats){
+
+	public String evaluateEmailText(String recipientName, int ticketAmount, String seats, int price){
 		return this.templateText.replaceAll(TEMPLATE_PLACEHOLDER_NAME, StringUtils.splitByWholeSeparator(recipientName, StringUtils.SPACE)[0].trim())
-		                        .replaceAll(TEMPLATE_PLACEHOLDER_PRICE, "" + PropertyHandler.getInstance().getPropertyInt(PropertyHandler.PROP_TICKET_PRICE) * ticketAmount)
+		                        .replaceAll(TEMPLATE_PLACEHOLDER_PRICE, "" + (price * ticketAmount))
 		                        .replaceAll(TEMPLATE_PLACEHOLDER_SEATS, seats == null ? "" : seats);
 	}
-	
+
 }
