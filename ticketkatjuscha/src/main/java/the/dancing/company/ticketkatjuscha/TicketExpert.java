@@ -151,7 +151,7 @@ public class TicketExpert {
 		this.ownerName = ownerName;
 		this.seats = seats;
 		this.emailRecipient = recipient;
-		this.price = price > 0 ? price : PropertyHandler.getInstance().getPropertyInt(PropertyHandler.PROP_TICKET_PRICE);
+		this.price = price >= 0 ? price : PropertyHandler.getInstance().getPropertyInt(PropertyHandler.PROP_TICKET_PRICE);
 		//check the seats
 		if (seats == null || seats.size() != amountOfTickets){
 			//seats does not fit amount of tickets
@@ -245,7 +245,7 @@ public class TicketExpert {
 		logWriter.println("Sending email notification...");
 		try {
 			String emailText = EmailTemplate.loadTemplate(TEMPLATES.TICKET_TEMPLATE).evaluateEmailText(ownerName, amountOfTickets, null, this.price);
-			EmailTransmitter.transmitEmail(emailText, ticketFiles, emailRecipient);
+			EmailTransmitter.transmitEmail(emailText, ticketFiles, emailRecipient, PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_EMAIL_TEMPLATE_SUBJECT));
 		} catch (IOException | EmailTransmissionException e) {
 			logWriter.print("Problääääm. Could not send the email notification: " + e.getMessage() + ". But your tickets were generated, so check the output-directory.");
 			e.printStackTrace(logWriter);

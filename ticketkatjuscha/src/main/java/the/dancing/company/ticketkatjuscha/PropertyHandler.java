@@ -21,7 +21,9 @@ public class PropertyHandler {
 	public static final String PROP_DEFAULT_EMAIL_RECIPIENT = "defaultEmailRecipient";
 	public static final String PROP_EMAIL_TEMPLATE_FILE = "emailTemplateBodyFile";
 	public static final String PROP_EMAIL_NOTIFICATION_TEMPLATE_FILE = "emailNotificationTemplateBodyFile";
+	public static final String PROP_EMAIL_NOTIFICATION_TEMPLATE_SUBJECT = "emailNotificationTemplateSubject";
 	public static final String PROP_EMAIL_REVOCATION_TEMPLATE_FILE = "emailRevocationTemplateBodyFile";
+	public static final String PROP_EMAIL_REVOCATION_TEMPLATE_SUBJECT = "emailRevocationTemplateSubject";
 
 	public static final String PROP_EMAIL_TEMPLATE_SUBJECT = "emailTemplateSubject";
 	public static final String PROP_EMAIL_HOST = "mail.smtp.host";

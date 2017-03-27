@@ -66,10 +66,12 @@ public class TicketNotifier {
 					String email = codeData.getAdditionalCodeData().getData(ADDITIONAL_DATA.TICKET_EMAIL);
 					if (email != null && email.trim().length() > 0){
 						foundEmails.put(email, codeData);
-						foundCodes.add(codeData);
 					}else{
-						return terminateWithError("seat " + seat + " does not have a valid email address", null);
+						//no email found, use default
+						foundEmails.put(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_DEFAULT_EMAIL_RECIPIENT), codeData);
+//						return terminateWithError("seat " + seat + " does not have a valid email address", null);
 					}
+					foundCodes.add(codeData);
 				}
 			}
 
@@ -86,6 +88,7 @@ public class TicketNotifier {
 			//generate email text and send email
 			CodeData codeData = foundEmails.entrySet().iterator().next().getValue();
 			String emailtext = "";
+			String subject = "";
 
 			int price = codeData.getAdditionalCodeData().getDataAsInt(ADDITIONAL_DATA.TICKET_PRICE);
 			if (price <= 0){
@@ -95,14 +98,16 @@ public class TicketNotifier {
 			try {
 				switch(notificationType){
 					case PAYMENT_NOTIFICATION:
+						subject = PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_EMAIL_NOTIFICATION_TEMPLATE_SUBJECT);
 						emailtext = EmailTemplate.loadTemplate(TEMPLATES.NOTIFICATION_TEMPLATE).evaluateEmailText(codeData.getName(), foundCodes.size(), null, price);
 						break;
 					case TICKET_REVOCATION:
+						subject = PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_EMAIL_REVOCATION_TEMPLATE_SUBJECT);
 						emailtext = EmailTemplate.loadTemplate(TEMPLATES.REVOCATION_TEMPLATE).evaluateEmailText(codeData.getName(), foundCodes.size(), makeSeatList(foundCodes), price);
 						break;
 				}
-				String recipient = codeData.getAdditionalCodeData().getData(ADDITIONAL_DATA.TICKET_EMAIL);
-				EmailTransmitter.transmitEmail(emailtext, null, recipient);
+				String recipient = foundEmails.keySet().iterator().next(); //codeData.getAdditionalCodeData().getData(ADDITIONAL_DATA.TICKET_EMAIL);
+				EmailTransmitter.transmitEmail(emailtext, null, recipient, subject);
 				lastRecipient = recipient;
 
 				//message specific post-processing

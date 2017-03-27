@@ -21,7 +21,7 @@ import the.dancing.company.ticketkatjuscha.exceptions.EmailTransmissionException
 
 
 public class EmailTransmitter {
-	public static void transmitEmail(String emailtext, List<File> ticketFiles, String emailRecipient) throws EmailTransmissionException{
+	public static void transmitEmail(String emailtext, List<File> ticketFiles, String emailRecipient, String subject) throws EmailTransmissionException{
 		Properties props = PropertyHandler.getInstance().getProperties();
 
         Session session = Session.getDefaultInstance(props);
@@ -47,7 +47,11 @@ public class EmailTransmitter {
             	message.addRecipient(Message.RecipientType.CC, ccAddress);
             }
             	
-            message.setSubject(propHandler.getPropertyString(PropertyHandler.PROP_EMAIL_TEMPLATE_SUBJECT));
+            if (subject != null && subject.trim().length() > 0){
+            	message.setSubject(subject);
+            }else{
+            	message.setSubject(propHandler.getPropertyString(PropertyHandler.PROP_EMAIL_TEMPLATE_SUBJECT));
+            }
             
             //lets create a multipart message
             Multipart multipart = new MimeMultipart();
