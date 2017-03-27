@@ -414,8 +414,14 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 			showErrorDialog(e.getMessage());
 			return;
 		}
-
-		showInfoDialog("Gültiges Ticket", "Das Ticket mit dem Code " + inputCode + " ist gültig und wurde entwertet.");
+		
+		if (codeData.getAdditionalCodeData().getDataAsBoolean(ADDITIONAL_DATA.TICKET_UNPAID)){
+			//ticket valid, but must be paid
+			showInfoDialogForUnpaidTicket("Gültiges, aber unbezahltes Ticket ", "Das Ticket mit dem Code " + inputCode + " ist gültig aber muss noch bezahlt werden.");
+		}else{
+			//ticket valid, go in
+			showInfoDialog("Gültiges Ticket", "Das Ticket mit dem Code " + inputCode + " ist gültig und wurde entwertet.");
+		}
 
 		updatePendingTicketsLabel(codeList);
 	}
@@ -432,6 +438,12 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 		new JOptionPane(breakTheLineIfNotBreakedYet(message)).createDialog(TicketOffice.this, title).setVisible(true);
 	}
 
+	private void showInfoDialogForUnpaidTicket(String title, String message, String... params){
+		setOptionPaneBackground(Color.YELLOW);
+		JOptionPane.showMessageDialog(this, makeHTMLMessage(message, params), title, JOptionPane.WARNING_MESSAGE );
+		resetOptionPaneBackground();
+	}
+	
 	private void showInfoDialogForInvalidTicket(String title, String message, String... params){
 		setOptionPaneBackground(Color.RED);
 		JOptionPane.showMessageDialog(this, makeHTMLMessage(message, params), title, JOptionPane.WARNING_MESSAGE );
