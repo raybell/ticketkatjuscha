@@ -27,6 +27,21 @@ import com.itextpdf.text.pdf.PdfStamper;
  */
 public class PDFTicketGenerator implements TicketGenerator {
 
+	private static final String PROP_TICKET_POS_PREFIX = "ticketpos";
+	private static final String PROP_TICKET_POS_VERTICALCODE = "verticalcode";
+	private static final String PROP_TICKET_POS_HORIZONTALCODE = "horizontalcode";
+	private static final String PROP_TICKET_POS_PRICE = "price";
+	private static final String PROP_TICKET_POS_SEAT = "seat";
+	private static final String PROP_TICKET_POS_ROW = "row";
+	private static final String PROP_TICKET_POS_NAME = "name";
+	private static final String PROP_TICKET_POS_CODE2 = "code2";
+	private static final String PROP_TICKET_POS_CODE1 = "code1";
+	
+	private static enum COORDINATES {
+		x,
+		y
+	};
+	
     public PDFTicketGenerator() {
     }
 
@@ -47,39 +62,58 @@ public class PDFTicketGenerator implements TicketGenerator {
             PdfContentByte cb = stamper.getOverContent(i);
             Rectangle pageSize = reader.getPageSize(i);
             //float width = pageSize.getWidth();
-            float height = pageSize.getHeight();
+            float height = pageSize.getHeight();	//842
 
             BaseFont baseFont = BaseFont.createFont(BaseFont.HELVETICA, "winansi", true);
 
             // code1 -> (88mm / 102mm)
-            drawText(code, mm2point(88.0f), height - mm2point(105.0f), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
+            //drawText(code, mm2point(88.0f), height - mm2point(105.0f), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
+            drawText(code, getElementPos(PROP_TICKET_POS_CODE1, COORDINATES.x), 
+            		       height - getElementPos(PROP_TICKET_POS_CODE1, COORDINATES.y), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
 
             // code 2 -> (132mm / 102mm)
-            drawText(checkCode, mm2point(132.0f), height - mm2point(105.0f), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
+            //drawText(checkCode, mm2point(132.0f), height - mm2point(105.0f), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
+            drawText(checkCode, getElementPos(PROP_TICKET_POS_CODE2, COORDINATES.x), 
+            		            height - getElementPos(PROP_TICKET_POS_CODE2, COORDINATES.y), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
 
             // name -> (115mm / 63.6mm)
-            drawText(ticketOwnerName, mm2point(115.0f), height - mm2point(63.6f), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
+            //drawText(ticketOwnerName, mm2point(115.0f), height - mm2point(63.6f), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
+            drawText(ticketOwnerName, getElementPos(PROP_TICKET_POS_NAME, COORDINATES.x), 
+            		                  height - getElementPos(PROP_TICKET_POS_NAME, COORDINATES.y), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
 
             // row
-            drawText(seat.getValue0(), mm2point(52.0f), height - mm2point(73.5f), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
+            //drawText(seat.getValue0(), mm2point(52.0f), height - mm2point(73.5f), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
+            drawText(seat.getValue0(), getElementPos(PROP_TICKET_POS_ROW, COORDINATES.x), 
+            		                   height - getElementPos(PROP_TICKET_POS_ROW, COORDINATES.y), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
 
             //seat
-            drawText(seat.getValue1(), mm2point(98.0f), height - mm2point(73.5f), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
+            //drawText(seat.getValue1(), mm2point(98.0f), height - mm2point(73.5f), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
+            drawText(seat.getValue1(), getElementPos(PROP_TICKET_POS_SEAT, COORDINATES.x), 
+            		                   height - getElementPos(PROP_TICKET_POS_SEAT, COORDINATES.y), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
 
-            //price
+            //prices
             DecimalFormat df = new DecimalFormat("#,##0.00");
-            drawText(df.format(price) + " \u20ac", mm2point(132.0f), height - mm2point(87.5f), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
+            //drawText(df.format(price) + " \u20ac", mm2point(132.0f), height - mm2point(87.5f), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
+            drawText(df.format(price) + " \u20ac", getElementPos(PROP_TICKET_POS_PRICE, COORDINATES.x), 
+            		                               height - getElementPos(PROP_TICKET_POS_PRICE, COORDINATES.y), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
 
             // horizontal barcode (13mm / 105mm)
-            drawBarcode(code + " " + checkCode, mm2point(13.0f), height - mm2point(105.0f), 0, PdfContentByte.ALIGN_LEFT, cb);
+            //drawBarcode(code + " " + checkCode, mm2point(13.0f), height - mm2point(105.0f), 0, PdfContentByte.ALIGN_LEFT, cb);
+            drawBarcode(code + " " + checkCode, getElementPos(PROP_TICKET_POS_HORIZONTALCODE, COORDINATES.x), 
+            		                            height - getElementPos(PROP_TICKET_POS_HORIZONTALCODE, COORDINATES.y), 0, PdfContentByte.ALIGN_LEFT, cb);
 
             // vertical boarcode (29mm / 13mm)
-            drawBarcode(code + " " + checkCode, mm2point(29.0f), height - mm2point(13.0f), 90, PdfContentByte.ALIGN_RIGHT, cb);
-
+            //drawBarcode(code + " " + checkCode, mm2point(29.0f), height - mm2point(13.0f), 90, PdfContentByte.ALIGN_RIGHT, cb);
+            drawBarcode(code + " " + checkCode, getElementPos(PROP_TICKET_POS_VERTICALCODE, COORDINATES.x), 
+            		                            height - getElementPos(PROP_TICKET_POS_VERTICALCODE, COORDINATES.y), 90, PdfContentByte.ALIGN_RIGHT, cb);
         }
         stamper.close();
 
         reader.close();
+    }
+    
+    private static float getElementPos(String id, COORDINATES coord){
+    	return mm2point(Float.valueOf(PropertyHandler.getInstance().getPropertyString(PROP_TICKET_POS_PREFIX + "." + id + "." + coord.name())));
     }
 
     @Override
@@ -168,7 +202,7 @@ public class PDFTicketGenerator implements TicketGenerator {
      * @param d
      * @return
      */
-    private float mm2point(float d) {
+    private static float mm2point(float d) {
         return d * (72.0f / 25.4f);
     }
 }
