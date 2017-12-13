@@ -5,7 +5,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.math.BigDecimal;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -45,6 +44,7 @@ public class TicketExpert {
 	private TicketGenerator ticketGenerator;
 	private String emailRecipient;
 	private int price;
+	private StringBuilder processWarnings;
 
 	private static Options options = new Options();
 	static{
@@ -161,6 +161,8 @@ public class TicketExpert {
 	}
 
 	public boolean process(ITicketProcessFailed failHandler, PrintStream logWriter){
+		processWarnings = new StringBuilder();
+		
 		//load current properties
 		logWriter.println("Loading current properties...");
 		PropertyHandler.load();
@@ -232,6 +234,22 @@ public class TicketExpert {
 			tmpFile.renameTo(ticketFile);
 			ticketFiles.add(ticketFile);
 		}
+		
+		//create seat plan for email
+//		File seatPlanTemplate = new File(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_SEATPLAN_EMAILTEMPLATE_FILE));
+//		if (seatPlanTemplate.exists()){
+//			try {
+//				File tmpSeatPlan = File.createTempFile(seatPlanTemplate.getName(), null);
+//				Files.copy(seatPlanTemplate.toPath(), tmpSeatPlan.toPath(), StandardCopyOption.REPLACE_EXISTING);
+//				SeatPlanHandler.markSeatsForEmailNotification(tmpSeatPlan, seats);
+//				File pdfFile = File.createTempFile(seatPlanTemplate.getName(), ".pdf");
+//				SeatPlanHandler.convertSeatPlanToPDF(tmpSeatPlan, pdfFile);
+//			} catch (IOException e) {
+//				makeProcessingWarning(logWriter, "Got a problem generating seatplan for mail notification.", e);
+//			}
+//		}else{
+//			makeProcessingWarning(logWriter, "Could not find seatplan template for emails in file '" + seatPlanTemplate.getName() + "'. So notification emails will be sent without it.", null);
+//		}
 
 		//save codes
 		logWriter.println("Updating code list...");
@@ -247,10 +265,16 @@ public class TicketExpert {
 			String emailText = EmailTemplate.loadTemplate(TEMPLATES.TICKET_TEMPLATE).evaluateEmailText(ownerName, amountOfTickets, null, this.price);
 			EmailTransmitter.transmitEmail(emailText, ticketFiles, emailRecipient, PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_EMAIL_TEMPLATE_SUBJECT));
 		} catch (IOException | EmailTransmissionException e) {
-			logWriter.print("Problääääm. Could not send the email notification: " + e.getMessage() + ". But your tickets were generated, so check the output-directory.");
-			e.printStackTrace(logWriter);
+			makeProcessingWarning(logWriter, "Could not send the email notification: " + e.getMessage(), e);
 		}
 
+		//update seat plan
+		try {
+			new SeatPlanHandler(logWriter).markSeatsAsSold(this.seats, this.ownerName);
+		} catch (IOException e) {
+			makeProcessingWarning(logWriter, "Seat plan wasn't updated correctly: " + e.getMessage(), e);
+		}
+		
 		//save props [disabled because it scrambles the props...]
 //		logWriter.println("Storing properties...");
 //		PropertyHandler.persist();
@@ -260,6 +284,14 @@ public class TicketExpert {
 					       + new File(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_GEN_DIR) + File.separator).getAbsolutePath()
 					       + "' to find your tickets.");
 		return true;
+	}
+	
+	private void makeProcessingWarning(PrintStream logWriter, String warning, Exception e){
+		logWriter.print("Warning: " + warning + ". But your tickets were generated, so check the output-directory.");
+		addProcessWarning(warning);
+		if (e != null){
+			e.printStackTrace(logWriter);
+		}
 	}
 
 	private boolean terminateWithError(String message, Exception e, boolean clearOutputDirectory, ITicketProcessFailed failHandler){
@@ -300,5 +332,20 @@ public class TicketExpert {
 			}
 			f.renameTo(archiveFile);
 		}
+	}
+	
+	public boolean hasProcessWarning(){
+		return this.processWarnings != null && this.processWarnings.length() > 0;
+	}
+	
+	public String getProcessWarnings(){
+		return this.processWarnings.toString();
+	}
+	
+	private void addProcessWarning(String text){
+		if (this.processWarnings.length() > 0){
+			this.processWarnings.append("\n");
+		}
+		this.processWarnings.append(text);
 	}
 }

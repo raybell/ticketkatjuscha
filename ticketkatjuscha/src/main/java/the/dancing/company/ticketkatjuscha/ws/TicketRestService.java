@@ -115,6 +115,7 @@ public class TicketRestService {
 
 	private Response sendTicketNotification(String seats, NOTIFICATION_TYPE type){
 		StringBuilder response = new StringBuilder();
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
 		TicketNotifier ticketNotifier = new TicketNotifier(new ITicketProcessFailed() {
 			@Override
@@ -128,12 +129,22 @@ public class TicketRestService {
 				}
 				return false;
 			}
-		});
+		}, new PrintStream(baos));
 
 		boolean sendNotification = ticketNotifier.sendNotification(SeatTokenizer.parseSeats(seats), type);
 
 		if (sendNotification){
 			response.append("Successfully sent " + type.getName() + " to " + ticketNotifier.getLastRecipient());
+		}
+		
+		try {
+			baos.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		if (baos.size() > 0){
+			response.append("\n\n\nProcessing details:\n" + new String(baos.toByteArray()));
 		}
 
 		return Response.status(200).entity(response.toString()).build();

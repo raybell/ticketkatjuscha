@@ -30,12 +30,15 @@ import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.apache.poi.EncryptedDocumentException;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.javatuples.Pair;
 
 import the.dancing.company.ticketkatjuscha.CodeListHandlerFactory;
 import the.dancing.company.ticketkatjuscha.ICodeListHandler;
 import the.dancing.company.ticketkatjuscha.ITicketProcessFailed;
 import the.dancing.company.ticketkatjuscha.PropertyHandler;
+import the.dancing.company.ticketkatjuscha.SeatPlanHandler;
 import the.dancing.company.ticketkatjuscha.TicketExpert;
 import the.dancing.company.ticketkatjuscha.TicketNotifier;
 import the.dancing.company.ticketkatjuscha.data.AdditionalCodeData.ADDITIONAL_DATA;
@@ -147,17 +150,34 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 					//ignore
 				}
 
-				if (new TicketExpert(ticketAmount, tfTicketOwner.getText(), seats, tfTicketRecipient.getText(), price).process(new ITicketProcessFailed() {
+				TicketExpert theExpert = new TicketExpert(ticketAmount, tfTicketOwner.getText(), seats, tfTicketRecipient.getText(), price);
+				if (theExpert.process(new ITicketProcessFailed() {
 					@Override
 					public boolean handleFailedState(String message, Exception cause) {
 						showErrorDialog("Huiuiuiui sagt die UI, da ging wohl was in die Hose.\nNachricht: " + message + (cause != null ? "\n\nInfos vom Verursacher: " + cause.toString() : "" ) + "\n\nMehr auf der Konsole...");
 						return false;
 					}
 				}, System.out)){
-					showInfoDialog("Yeah!!!", "We rocked the office.");
+					showInfoDialog("Yeah!!!", "We rocked the office." + (theExpert.hasProcessWarning() ? "\n\nBut we have some warnings: \n" + theExpert.getProcessWarnings() : ""));
 				}
 			}
 		});
+		
+		JButton seatPlanButton = new JButton("Create initial seatplan");
+		officePanel.add(seatPlanButton);
+		seatPlanButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				try {
+					new SeatPlanHandler(System.out).makeNewPlan();
+					showInfoDialog("Yippii", "Seat plan generated");
+				} catch (EncryptedDocumentException | InvalidFormatException | IOException e1) {
+					showErrorDialog(e1.getMessage());
+					e1.printStackTrace();
+				}
+			}
+		});
+		
 		tabPanel.addTab("Ticket Office", officePanel);
 
 		//************ ticket notification panel *************
@@ -283,7 +303,7 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 					showErrorDialog(message);
 					return false;
 				}
-			});
+			}, System.out);
 
 			boolean sendSuccessFull = ticketNotifier.sendNotification(seats, notificationType);
 			if (sendSuccessFull){

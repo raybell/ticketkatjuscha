@@ -1,6 +1,7 @@
 package the.dancing.company.ticketkatjuscha;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -38,10 +39,12 @@ public class TicketNotifier {
 	};
 
 	private ITicketProcessFailed failureHandler;
+	private PrintStream logWriter;
 	private String lastRecipient;
 
-	public TicketNotifier(ITicketProcessFailed failureHandler){
+	public TicketNotifier(ITicketProcessFailed failureHandler, PrintStream logWriter){
 		this.failureHandler = failureHandler;
+		this.logWriter = logWriter;
 	}
 
 	public boolean sendNotification(List<Pair<String, String>> seats, NOTIFICATION_TYPE notificationType){
@@ -124,6 +127,8 @@ public class TicketNotifier {
 							code.getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_WITHDRAWED, "true");
 						}
 						codeListHandler.saveCodeList(codeList);
+						//free seat in plan
+						new SeatPlanHandler(logWriter).freeSeats(seats);
 						break;
 				}
 			} catch (IOException | EmailTransmissionException e) {
@@ -140,10 +145,10 @@ public class TicketNotifier {
 	}
 
 	private boolean terminateWithError(String message, Exception e){
-		System.err.println(message);
+		log(message);
 		if (e != null){
-			System.err.println("Info: " + e.toString());
-			e.printStackTrace(System.err);
+			log("Info: " + e.toString());
+			e.printStackTrace(logWriter);
 		}
 
 		return failureHandler.handleFailedState(message, e);
@@ -170,6 +175,12 @@ public class TicketNotifier {
 		}
 
 		return sb.toString();
+	}
+	
+	private void log(String message){
+		if (this.logWriter != null){
+			logWriter.println(message);
+		}
 	}
 
 }

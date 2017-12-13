@@ -24,6 +24,11 @@ public class PropertyHandler {
 	public static final String PROP_EMAIL_NOTIFICATION_TEMPLATE_SUBJECT = "emailNotificationTemplateSubject";
 	public static final String PROP_EMAIL_REVOCATION_TEMPLATE_FILE = "emailRevocationTemplateBodyFile";
 	public static final String PROP_EMAIL_REVOCATION_TEMPLATE_SUBJECT = "emailRevocationTemplateSubject";
+	public static final String PROP_SEATPLAN_CONFIG = "seatPlanConfigFile";
+	public static final String PROP_SEATPLAN_FILE = "seatPlanFile";
+	public static final String PROP_SEATPLAN_EMAILTEMPLATE_FILE = "seatPlanEmailTemplateFile";
+	public static final String PROP_SEATPLAN_SCANAREA_MAXROW = "seatPlanScanAreaMaxRow";
+	public static final String PROP_SEATPLAN_SCANAREA_MAXCOL = "seatPlanScanAreaMaxCol";
 
 	public static final String PROP_EMAIL_TEMPLATE_SUBJECT = "emailTemplateSubject";
 	public static final String PROP_EMAIL_HOST = "mail.smtp.host";
@@ -39,7 +44,9 @@ public class PropertyHandler {
 		{PROP_TICKET_ARCHIVE_DIR, "archive"},
 		{PROP_TICKET_TEMPLATE_FILE, "template/template.pdf"},
 		{PROP_CODELIST_BACKUP_DIR, "backup"},
-		{PROP_SERVER_PORT, "9998"}
+		{PROP_SERVER_PORT, "9998"},
+		{PROP_SEATPLAN_SCANAREA_MAXROW, "1000"},
+		{PROP_SEATPLAN_SCANAREA_MAXCOL, "1000"}
 	};
 
 	private static final String PROP_FILENAME = "katjuscha.properties";
