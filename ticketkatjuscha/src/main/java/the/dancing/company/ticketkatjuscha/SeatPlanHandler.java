@@ -85,9 +85,9 @@ public class SeatPlanHandler {
 				       seats, null, CELL_COLOR_FREE, CELL_COLOR_UNTOUCHED);
 	}
 	
-	public void markSeatsAsSold(List<Pair<String, String>> seats, String buyerName) throws IOException{
+	public void markSeatsAsSold(List<Pair<String, String>> seats, String buyerName, String bookingNumber) throws IOException{
 		setSeatsInPlan(new File(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_SEATPLAN_FILE)),
-				       seats, buyerName, CELL_COLOR_TAKEN, CELL_COLOR_UNTOUCHED);
+				       seats, buyerName + "\n" + bookingNumber, CELL_COLOR_TAKEN, CELL_COLOR_UNTOUCHED);
 	}
 	
 	public void markSeatsForEmailNotification(File tmpPlan, List<Pair<String, String>> seats) throws IOException{

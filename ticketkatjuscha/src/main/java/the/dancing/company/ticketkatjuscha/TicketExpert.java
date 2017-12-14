@@ -267,7 +267,7 @@ public class TicketExpert {
 		//update seat plan
 		logWriter.println("Updating seat plan...");
 		try {
-			new SeatPlanHandler(logWriter).markSeatsAsSold(this.seats, this.ownerName);
+			new SeatPlanHandler(logWriter).markSeatsAsSold(this.seats, this.ownerName, paymentData.getBookingNumber());
 		} catch (IOException e) {
 			makeProcessingWarning(logWriter, "Seat plan wasn't updated correctly: " + e.getMessage(), e);
 		}
