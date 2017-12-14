@@ -7,7 +7,9 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URI;
 import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -32,6 +34,7 @@ import com.sun.jersey.api.core.ResourceConfig;
 import the.dancing.company.ticketkatjuscha.EmailTemplate.TEMPLATES;
 import the.dancing.company.ticketkatjuscha.data.AdditionalCodeData.ADDITIONAL_DATA;
 import the.dancing.company.ticketkatjuscha.data.CodeData;
+import the.dancing.company.ticketkatjuscha.data.PaymentData;
 import the.dancing.company.ticketkatjuscha.exceptions.EmailTransmissionException;
 import the.dancing.company.ticketkatjuscha.exceptions.GeneratorException;
 import the.dancing.company.ticketkatjuscha.ui.TicketOffice;
@@ -171,6 +174,7 @@ public class TicketExpert {
 		logWriter.println("Generating new ticket codes...");
 		CodeGenerator codeGenerator = null;
 		HashMap<String, CodeData> newCodes = null;
+		PaymentData paymentData = makePaymentData();
 		try {
 			codeGenerator = new CodeGenerator(ownerName);
 
@@ -180,7 +184,7 @@ public class TicketExpert {
 			}
 
 			//make new code
-			newCodes = codeGenerator.generateNewTicketCodes(amountOfTickets, this.seats, this.emailRecipient, this.price);
+			newCodes = codeGenerator.generateNewTicketCodes(this.seats, paymentData);
 		} catch (GeneratorException e) {
 			return terminateWithError("Problääääm. Could not generate new ticket codes.", e, false, failHandler);
 		}
@@ -198,6 +202,7 @@ public class TicketExpert {
 		//generate new tickets
 		logWriter.println("Generating tickets (" + newCodes.size() + ") ...");
 		List<File> ticketFiles = new ArrayList<>();
+		
 
 		for (String newCode : newCodes.keySet()){
 			CodeData codeData = newCodes.get(newCode);
@@ -258,23 +263,34 @@ public class TicketExpert {
 		} catch (GeneratorException e) {
 			return terminateWithError("Problääääm. Could not write new ticket codes.", e, true, failHandler);
 		}
-
-		//generate email
-		logWriter.println("Sending email notification...");
-		try {
-			String emailText = EmailTemplate.loadTemplate(TEMPLATES.TICKET_TEMPLATE).evaluateEmailText(ownerName, amountOfTickets, null, this.price);
-			EmailTransmitter.transmitEmail(emailText, ticketFiles, emailRecipient, PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_EMAIL_TEMPLATE_SUBJECT));
-		} catch (IOException | EmailTransmissionException e) {
-			makeProcessingWarning(logWriter, "Could not send the email notification: " + e.getMessage(), e);
-		}
-
+		
 		//update seat plan
+		logWriter.println("Updating seat plan...");
 		try {
 			new SeatPlanHandler(logWriter).markSeatsAsSold(this.seats, this.ownerName);
 		} catch (IOException e) {
 			makeProcessingWarning(logWriter, "Seat plan wasn't updated correctly: " + e.getMessage(), e);
 		}
+
+		//update list of payments
+		logWriter.println("Updating payment list...");
 		
+		TicketPaymentHandler tph = new TicketPaymentHandler(logWriter);
+		try {
+			tph.updatePaymentList(paymentData);
+		} catch (IOException e) {
+			makeProcessingWarning(logWriter, "Could not update payment list: " + e.getMessage(), e);
+		}
+		
+		//generate email
+		logWriter.println("Sending email notification...");
+		try {
+			String emailText = EmailTemplate.loadTemplate(TEMPLATES.TICKET_TEMPLATE).evaluateEmailText(ownerName, amountOfTickets, null, this.price, paymentData.getBookingNumber());
+			EmailTransmitter.transmitEmail(emailText, ticketFiles, emailRecipient, PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_EMAIL_TEMPLATE_SUBJECT));
+		} catch (IOException | EmailTransmissionException e) {
+			makeProcessingWarning(logWriter, "Could not send the email notification: " + e.getMessage(), e);
+		}
+
 		//save props [disabled because it scrambles the props...]
 //		logWriter.println("Storing properties...");
 //		PropertyHandler.persist();
@@ -285,6 +301,20 @@ public class TicketExpert {
 					       + "' to find your tickets.");
 		return true;
 	}
+	
+	private PaymentData makePaymentData(){
+		SimpleDateFormat sdfBookingNr = new SimpleDateFormat("YYYYMMDDhhmmss");
+		Date currentTime = new Date();
+		PaymentData paymentData = new PaymentData();
+		paymentData.setBookingNumber(sdfBookingNr.format(currentTime.getTime()));
+		paymentData.setCustomerName(this.ownerName);
+		paymentData.setCustomerEmail(this.emailRecipient);
+		paymentData.setNumberOfTickets(amountOfTickets);
+		paymentData.setOrderPrice(this.price * amountOfTickets);
+		paymentData.setOrderDate(currentTime.getTime());
+		return paymentData;
+	}
+	
 	
 	private void makeProcessingWarning(PrintStream logWriter, String warning, Exception e){
 		logWriter.print("Warning: " + warning + ". But your tickets were generated, so check the output-directory.");

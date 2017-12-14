@@ -171,7 +171,7 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 				try {
 					new SeatPlanHandler(System.out).makeNewPlan();
 					showInfoDialog("Yippii", "Seat plan generated");
-				} catch (EncryptedDocumentException | InvalidFormatException | IOException e1) {
+				} catch (IOException e1) {
 					showErrorDialog(e1.getMessage());
 					e1.printStackTrace();
 				}

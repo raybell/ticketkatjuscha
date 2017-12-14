@@ -97,16 +97,17 @@ public class TicketNotifier {
 			if (price <= 0){
 				price = PropertyHandler.getInstance().getPropertyInt(PropertyHandler.PROP_TICKET_PRICE);
 			}
+			String bookingNumber = codeData.getAdditionalCodeData().getData(ADDITIONAL_DATA.TICKET_BOOKINGNUMBER);
 
 			try {
 				switch(notificationType){
 					case PAYMENT_NOTIFICATION:
 						subject = PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_EMAIL_NOTIFICATION_TEMPLATE_SUBJECT);
-						emailtext = EmailTemplate.loadTemplate(TEMPLATES.NOTIFICATION_TEMPLATE).evaluateEmailText(codeData.getName(), foundCodes.size(), null, price);
+						emailtext = EmailTemplate.loadTemplate(TEMPLATES.NOTIFICATION_TEMPLATE).evaluateEmailText(codeData.getName(), foundCodes.size(), null, price, bookingNumber);
 						break;
 					case TICKET_REVOCATION:
 						subject = PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_EMAIL_REVOCATION_TEMPLATE_SUBJECT);
-						emailtext = EmailTemplate.loadTemplate(TEMPLATES.REVOCATION_TEMPLATE).evaluateEmailText(codeData.getName(), foundCodes.size(), makeSeatList(foundCodes), price);
+						emailtext = EmailTemplate.loadTemplate(TEMPLATES.REVOCATION_TEMPLATE).evaluateEmailText(codeData.getName(), foundCodes.size(), makeSeatList(foundCodes), price, bookingNumber);
 						break;
 				}
 				String recipient = foundEmails.keySet().iterator().next(); //codeData.getAdditionalCodeData().getData(ADDITIONAL_DATA.TICKET_EMAIL);

@@ -3,7 +3,6 @@ package the.dancing.company.ticketkatjuscha;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
@@ -31,6 +30,8 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.javatuples.Pair;
 
+import the.dancing.company.ticketkatjuscha.util.Toolbox;
+
 public class SeatPlanHandler {
 
 	public static final String CELL_VAL_SEAT_NAME_SEP = ":";
@@ -46,14 +47,18 @@ public class SeatPlanHandler {
 		this.logWriter = logWriter;
 	}
 	
-	public void makeNewPlan() throws FileNotFoundException, IOException, EncryptedDocumentException, InvalidFormatException{
+	public void makeNewPlan() throws IOException {
+		File planConfig = new File(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_SEATPLAN_CONFIG));
 		File planFile = new File(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_SEATPLAN_FILE));
 		
+		if (!planConfig.exists()){
+			throw new IOException("Could not create seatplan because seatplan config '" + planConfig.getName() + "' isn't available");
+		}
+		
 		//backup old plan
-		makeBackupIfExists(planFile);
+		Toolbox.makeBackupIfExists(planFile);
 		
 		//make new plan
-		File planConfig = new File(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_SEATPLAN_CONFIG));
 		int lineNumber = 0;
 		try (BufferedReader br = new BufferedReader(new FileReader(planConfig)); HSSFWorkbook wb = new HSSFWorkbook(); FileOutputStream fileOut = new FileOutputStream(planFile)) {
 			Sheet sheet = wb.createSheet();
@@ -71,7 +76,7 @@ public class SeatPlanHandler {
 		}
 		
 		File planForEmailFile = new File(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_SEATPLAN_EMAILTEMPLATE_FILE));
-		makeBackupIfExists(planForEmailFile);
+		Toolbox.makeBackupIfExists(planForEmailFile);
 		Files.copy(planFile.toPath(), planForEmailFile.toPath());
 	}
 	
@@ -97,6 +102,10 @@ public class SeatPlanHandler {
 		List<Pair<String, String>> clonedSeats = new ArrayList<>(seats);
 		FileInputStream fis = null;
 		Workbook wb = null;
+		
+		if (!seatplanFile.exists()){
+			makeNewPlan();
+		}
 		
 		try{
 			fis = new FileInputStream(seatplanFile);
@@ -229,17 +238,7 @@ public class SeatPlanHandler {
 		return null;
 	}
 	
-	private void makeBackupIfExists(File file){
-		if (file.exists()){
-			File fileBackup = new File(file.getName() + ".bak");
-			if (fileBackup.exists()){
-				fileBackup.delete();
-			}
-			file.renameTo(fileBackup);
-		}
-	}
-	
-	private void log(String message){
+	private void log(String message){ 
 		if (this.logWriter != null){
 			logWriter.println(message);
 		}

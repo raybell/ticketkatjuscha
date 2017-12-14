@@ -16,6 +16,7 @@ import the.dancing.company.ticketkatjuscha.data.AdditionalCodeData.ADDITIONAL_DA
 import the.dancing.company.ticketkatjuscha.exceptions.GeneratorException;
 import the.dancing.company.ticketkatjuscha.util.SeatTokenizer;
 import the.dancing.company.ticketkatjuscha.data.CodeData;
+import the.dancing.company.ticketkatjuscha.data.PaymentData;
 import the.dancing.company.ticketkatjuscha.data.Ticket;
 
 public class CodeGenerator {
@@ -35,14 +36,16 @@ public class CodeGenerator {
 		}
 	}
 
-	public HashMap<String, CodeData> generateNewTicketCodes(int amount, List<Pair<String, String>> seats, String emailRecipient, int price) throws GeneratorException{
+	public HashMap<String, CodeData> generateNewTicketCodes(List<Pair<String, String>> seats, PaymentData paymentData) throws GeneratorException{
 		try {
 			HashMap<String, CodeData> newCodeList = new HashMap<>();
-			for (int i = 0; i < amount; i++) {
+			for (int i = 0; i < paymentData.getNumberOfTickets(); i++) {
 				Ticket newTicket = generateNewCode();
 				newTicket.getCodeData().getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_SEAT, SeatTokenizer.makeSeatToken(seats.get(i)));
-				newTicket.getCodeData().getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_EMAIL, emailRecipient);
-				newTicket.getCodeData().getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_PRICE, "" + price);
+				newTicket.getCodeData().getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_EMAIL, paymentData.getCustomerEmail());
+				newTicket.getCodeData().getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_PRICE, "" + paymentData.getOrderPrice());
+				newTicket.getCodeData().getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_BOOKINGNUMBER, "" + paymentData.getBookingNumber());
+				
 				newCodeList.put(newTicket.getCode(), newTicket.getCodeData());
 				codeList.put(newTicket.getCode(), newTicket.getCodeData());
 			}

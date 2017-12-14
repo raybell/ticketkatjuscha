@@ -29,6 +29,7 @@ public class PropertyHandler {
 	public static final String PROP_SEATPLAN_EMAILTEMPLATE_FILE = "seatPlanEmailTemplateFile";
 	public static final String PROP_SEATPLAN_SCANAREA_MAXROW = "seatPlanScanAreaMaxRow";
 	public static final String PROP_SEATPLAN_SCANAREA_MAXCOL = "seatPlanScanAreaMaxCol";
+	public static final String PROP_TICKET_PAYMENT_LIST_FILE = "ticketPaymentListFile";
 
 	public static final String PROP_EMAIL_TEMPLATE_SUBJECT = "emailTemplateSubject";
 	public static final String PROP_EMAIL_HOST = "mail.smtp.host";

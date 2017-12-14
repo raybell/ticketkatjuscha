@@ -6,10 +6,13 @@ import java.nio.file.Files;
 
 import org.apache.commons.lang3.StringUtils;
 
+import the.dancing.company.ticketkatjuscha.data.PaymentData;
+
 public class EmailTemplate {
 	private static String TEMPLATE_PLACEHOLDER_NAME = "%%name%%";
 	private static String TEMPLATE_PLACEHOLDER_PRICE = "%%price%%";
 	private static String TEMPLATE_PLACEHOLDER_SEATS = "%%seats%%";
+	private static String TEMPLATE_PLACEHOLDER_BOOKING_NUMBER = "%%bookingNumber%%";
 
 	public static enum TEMPLATES {
 		TICKET_TEMPLATE(PropertyHandler.PROP_EMAIL_TEMPLATE_FILE),
@@ -46,10 +49,11 @@ public class EmailTemplate {
 		this.templateText = templateText;
 	}
 
-	public String evaluateEmailText(String recipientName, int ticketAmount, String seats, int price){
+	public String evaluateEmailText(String recipientName, int ticketAmount, String seats, int price, String bookingNumber){
 		return this.templateText.replaceAll(TEMPLATE_PLACEHOLDER_NAME, StringUtils.splitByWholeSeparator(recipientName, StringUtils.SPACE)[0].trim())
 		                        .replaceAll(TEMPLATE_PLACEHOLDER_PRICE, "" + (price * ticketAmount))
-		                        .replaceAll(TEMPLATE_PLACEHOLDER_SEATS, seats == null ? "" : seats);
+		                        .replaceAll(TEMPLATE_PLACEHOLDER_SEATS, seats == null ? "" : seats)
+		                        .replaceAll(TEMPLATE_PLACEHOLDER_BOOKING_NUMBER, bookingNumber);
 	}
 
 }

@@ -1,5 +1,6 @@
 package the.dancing.company.ticketkatjuscha.util;
 
+import java.io.File;
 import java.net.URL;
 import java.util.jar.Manifest;
 
@@ -21,5 +22,15 @@ public class Toolbox {
 			e.printStackTrace();
 		}
 		return progVersion;
+	}
+	
+	public static void makeBackupIfExists(File file){
+		if (file.exists()){
+			File fileBackup = new File(file.getName() + ".bak");
+			if (fileBackup.exists()){
+				fileBackup.delete();
+			}
+			file.renameTo(fileBackup);
+		}
 	}
 }

@@ -11,7 +11,8 @@ public class AdditionalCodeData {
 		TICKET_EMAIL("eMail"),
 		TICKET_PAYMENT_REMINDER("Payment Reminder Counter"),
 		TICKET_PRICE("Ticket price"),
-		TICKET_UNPAID("Unpaid");
+		TICKET_UNPAID("Unpaid"),
+		TICKET_BOOKINGNUMBER("BookingNumber");
 
 		private String columnTitle;
 		ADDITIONAL_DATA(String columnTitle){
