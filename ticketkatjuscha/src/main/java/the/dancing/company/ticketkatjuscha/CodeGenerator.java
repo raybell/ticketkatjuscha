@@ -36,14 +36,14 @@ public class CodeGenerator {
 		}
 	}
 
-	public HashMap<String, CodeData> generateNewTicketCodes(List<Pair<String, String>> seats, PaymentData paymentData) throws GeneratorException{
+	public HashMap<String, CodeData> generateNewTicketCodes(List<Pair<String, String>> seats, int price, PaymentData paymentData) throws GeneratorException{
 		try {
 			HashMap<String, CodeData> newCodeList = new HashMap<>();
 			for (int i = 0; i < paymentData.getNumberOfTickets(); i++) {
 				Ticket newTicket = generateNewCode();
 				newTicket.getCodeData().getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_SEAT, SeatTokenizer.makeSeatToken(seats.get(i)));
 				newTicket.getCodeData().getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_EMAIL, paymentData.getCustomerEmail());
-				newTicket.getCodeData().getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_PRICE, "" + paymentData.getOrderPrice());
+				newTicket.getCodeData().getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_PRICE, "" + price);
 				newTicket.getCodeData().getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_BOOKINGNUMBER, "" + paymentData.getBookingNumber());
 				
 				newCodeList.put(newTicket.getCode(), newTicket.getCodeData());

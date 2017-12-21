@@ -184,7 +184,7 @@ public class TicketExpert {
 			}
 
 			//make new code
-			newCodes = codeGenerator.generateNewTicketCodes(this.seats, paymentData);
+			newCodes = codeGenerator.generateNewTicketCodes(this.seats, this.price, paymentData);
 		} catch (GeneratorException e) {
 			return terminateWithError("Problääääm. Could not generate new ticket codes.", e, false, failHandler);
 		}
