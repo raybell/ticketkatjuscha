@@ -303,7 +303,7 @@ public class TicketExpert {
 	}
 	
 	private PaymentData makePaymentData(){
-		SimpleDateFormat sdfBookingNr = new SimpleDateFormat("YYYYMMDDhhmmss");
+		SimpleDateFormat sdfBookingNr = new SimpleDateFormat("YYYYMMddHHmmss");
 		Date currentTime = new Date();
 		PaymentData paymentData = new PaymentData();
 		paymentData.setBookingNumber(sdfBookingNr.format(currentTime.getTime()));
