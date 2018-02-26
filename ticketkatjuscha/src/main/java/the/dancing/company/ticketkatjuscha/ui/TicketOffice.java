@@ -41,6 +41,7 @@ import the.dancing.company.ticketkatjuscha.PropertyHandler;
 import the.dancing.company.ticketkatjuscha.SeatPlanHandler;
 import the.dancing.company.ticketkatjuscha.TicketExpert;
 import the.dancing.company.ticketkatjuscha.TicketNotifier;
+import the.dancing.company.ticketkatjuscha.TicketPaymentHandler;
 import the.dancing.company.ticketkatjuscha.data.AdditionalCodeData.ADDITIONAL_DATA;
 import the.dancing.company.ticketkatjuscha.data.CodeData;
 import the.dancing.company.ticketkatjuscha.util.SeatTokenizer;
@@ -210,6 +211,33 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 
 		tabPanel.addTab("Ticket BackOffice", ticketNotifyPanel);
 
+		//************ payment panel **********
+		JPanel paymentPanel = new JPanel();
+		paymentPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 10));
+		JLabel bookingNoLabel = new JLabel("Booking number");
+		paymentPanel.add(bookingNoLabel);
+		JTextField bookingNoField = new JTextField(20);
+		paymentPanel.add(bookingNoField);
+		
+		JButton payTheMent = new JButton("Set to paid");
+		paymentPanel.add(payTheMent);
+
+		payTheMent.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				 try {
+					if (new TicketPaymentHandler(System.out).setToPaid(bookingNoField.getText())) {
+						showInfoDialog("Paid", "Booking number '" + bookingNoField.getText() + "' set to paid.");
+					}else {
+						showErrorDialog("Booking number '" + bookingNoField.getText() + "' wasn't found");
+					}
+				} catch (IOException e1) {
+					showErrorDialog("Problem setting booking no to paid: " + e1.getMessage());
+				}
+			}
+		});
+		tabPanel.addTab("Payment Office", paymentPanel);
+		
 		//************ event panel *************
 		JPanel eventPanel = new JPanel();
 		eventPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 10));

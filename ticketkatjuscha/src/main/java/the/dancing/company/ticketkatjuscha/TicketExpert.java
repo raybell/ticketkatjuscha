@@ -277,7 +277,7 @@ public class TicketExpert {
 		
 		TicketPaymentHandler tph = new TicketPaymentHandler(logWriter);
 		try {
-			tph.updatePaymentList(paymentData);
+			tph.insertPayment(paymentData);
 		} catch (IOException e) {
 			makeProcessingWarning(logWriter, "Could not update payment list: " + e.getMessage(), e);
 		}

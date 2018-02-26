@@ -22,13 +22,55 @@ import the.dancing.company.ticketkatjuscha.data.PaymentData;
 import the.dancing.company.ticketkatjuscha.util.Toolbox;
 
 public class TicketPaymentHandler {
+	private static final int CELL_ID_BOOKING_NO = 0;
+	private static final int CELL_ID_PAID = 5;
 	private PrintStream logWriter;
 	
 	public TicketPaymentHandler(PrintStream logWriter){
 		this.logWriter = logWriter;
 	}
 	
-	public void updatePaymentList(PaymentData payment) throws IOException{
+	public boolean setToPaid(String bookingNo) throws IOException{
+		File paymentListFile = new File(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_PAYMENT_LIST_FILE));
+		
+		if (!paymentListFile.exists()){
+			makeInitialPaymentList();
+		}
+		
+		FileInputStream fis = null;
+		Workbook wb = null;
+		try{
+			fis = new FileInputStream(paymentListFile);
+			wb = WorkbookFactory.create(fis);
+			
+			Sheet sheet = wb.getSheetAt(0);
+			for (int rowIndex = 0; rowIndex < sheet.getLastRowNum(); rowIndex++) {
+				Row row = sheet.getRow(rowIndex);
+				String sheetBookingNo = row.getCell(CELL_ID_BOOKING_NO).getStringCellValue();
+				if (row == null || Toolbox.isEmpty(sheetBookingNo)){
+					return false;
+				}
+				if (sheetBookingNo.equalsIgnoreCase(bookingNo)) {
+					//set paid flag
+					row.getCell(CELL_ID_PAID).setCellValue("yes");
+					
+					try(FileOutputStream fileOut = new FileOutputStream(paymentListFile)){
+						wb.write(fileOut);
+					}
+					return true;
+				}
+			}
+		}catch(EncryptedDocumentException | InvalidFormatException e){
+			throw new IOException(e);
+		}finally{
+			if (wb != null){
+				wb.close();
+			}
+		}
+		return false;
+	}
+	
+	public void insertPayment(PaymentData payment) throws IOException{
 		File paymentListFile = new File(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_PAYMENT_LIST_FILE));
 		
 		if (!paymentListFile.exists()){

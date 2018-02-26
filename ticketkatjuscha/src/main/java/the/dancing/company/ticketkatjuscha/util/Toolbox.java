@@ -33,4 +33,8 @@ public class Toolbox {
 			file.renameTo(fileBackup);
 		}
 	}
+	
+	public static boolean isEmpty(String val) {
+		return val == null || val.trim().length() == 0;
+	}
 }
