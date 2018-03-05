@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.TooManyListenersException;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -15,6 +16,7 @@ import javax.ws.rs.core.Response;
 import the.dancing.company.ticketkatjuscha.ITicketProcessFailed;
 import the.dancing.company.ticketkatjuscha.TicketExpert;
 import the.dancing.company.ticketkatjuscha.TicketNotifier;
+import the.dancing.company.ticketkatjuscha.TicketPaymentHandler;
 import the.dancing.company.ticketkatjuscha.TicketNotifier.NOTIFICATION_TYPE;
 import the.dancing.company.ticketkatjuscha.util.SeatTokenizer;
 import the.dancing.company.ticketkatjuscha.util.Toolbox;
@@ -87,6 +89,41 @@ public class TicketRestService {
 		return sendTicketNotification(seats, NOTIFICATION_TYPE.TICKET_REVOCATION);
 	}
 
+	@GET
+	@Path("/setTicketsToPaid")
+	@Produces("text/plain")
+	public Response setTicketsToPaid(@QueryParam("bookingNumber") String bookingNumber) {
+		StringBuilder response = new StringBuilder();
+		if (!Toolbox.isEmpty(bookingNumber)){
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			try{
+				boolean setToPaid = new TicketPaymentHandler(new PrintStream(baos)).setToPaid(bookingNumber);
+				if (setToPaid){
+					response.append("Booking number '" + bookingNumber + "' set to paid.");
+				}else {
+					response.append("Booking number '" + bookingNumber + "' wasn't found");
+				}
+			}catch(Exception e){
+				//something unexpected occured
+				response.append("Unexpected exception occured: " + e.toString() + "\n");
+				StringWriter sw = new StringWriter();
+				e.printStackTrace(new PrintWriter(sw));
+				response.append(sw.getBuffer().toString());
+			}
+			finally{
+				try {
+					baos.flush();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				response.append("\n\n\nProcessing details:\n" + new String(baos.toByteArray()));
+			}
+		}else{
+			response.append("Give me the booking number (requestparameter=bookingNumber) of the tickets you want to mark as paid.");
+		}
+		return Response.status(200).entity(response.toString()).build();
+	}
+	
 	@GET
 	@Path("/restart")
 	@Produces("text/plain")
