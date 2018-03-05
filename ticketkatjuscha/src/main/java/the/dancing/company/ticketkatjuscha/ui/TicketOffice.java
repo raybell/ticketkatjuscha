@@ -30,8 +30,6 @@ import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import org.apache.poi.EncryptedDocumentException;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.javatuples.Pair;
 
 import the.dancing.company.ticketkatjuscha.CodeListHandlerFactory;

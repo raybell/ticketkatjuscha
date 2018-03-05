@@ -13,6 +13,7 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -22,7 +23,12 @@ import the.dancing.company.ticketkatjuscha.data.PaymentData;
 import the.dancing.company.ticketkatjuscha.util.Toolbox;
 
 public class TicketPaymentHandler {
+	private static final int SHEET_PAYMENTS = 0;
+	private static final int SHEET_CALCULATION = 1;
 	private static final int CELL_ID_BOOKING_NO = 0;
+	private static final int CELL_ID_CUSTOMERNAME = 1;
+	private static final int CELL_ID_ORDER_AMOUNT = 4;
+	private static final int CELL_ID_PAYMENT_METHOD = 7;
 	private static final int CELL_ID_PAID = 5;
 	private PrintStream logWriter;
 	
@@ -43,16 +49,23 @@ public class TicketPaymentHandler {
 			fis = new FileInputStream(paymentListFile);
 			wb = WorkbookFactory.create(fis);
 			
-			Sheet sheet = wb.getSheetAt(0);
-			for (int rowIndex = 0; rowIndex < sheet.getLastRowNum(); rowIndex++) {
+			Sheet sheet = wb.getSheetAt(SHEET_PAYMENTS);
+			for (int rowIndex = 0; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
 				Row row = sheet.getRow(rowIndex);
-				String sheetBookingNo = row.getCell(CELL_ID_BOOKING_NO).getStringCellValue();
+				Cell cell = row.getCell(CELL_ID_BOOKING_NO);
+				String sheetBookingNo = cell.getStringCellValue();
 				if (row == null || Toolbox.isEmpty(sheetBookingNo)){
 					return false;
 				}
 				if (sheetBookingNo.equalsIgnoreCase(bookingNo)) {
+					String oldValue = row.getCell(CELL_ID_PAID).getStringCellValue();
 					//set paid flag
 					row.getCell(CELL_ID_PAID).setCellValue("yes");
+					
+					if (Toolbox.isEmpty(oldValue) || oldValue.equalsIgnoreCase("no")) {
+						//add payment to calculation sheet
+						addPaymentToCalcSheet(wb, row);
+					}
 					
 					try(FileOutputStream fileOut = new FileOutputStream(paymentListFile)){
 						wb.write(fileOut);
@@ -70,6 +83,53 @@ public class TicketPaymentHandler {
 		return false;
 	}
 	
+	private void addPaymentToCalcSheet(Workbook wb, Row paymentRow) throws IOException{
+		Sheet sheet = getSheet(wb, SHEET_CALCULATION);
+		
+		if (sheet == null) {
+			throw new IOException("could not find calculation sheet at index " + SHEET_CALCULATION);
+		}
+		 
+		Row row = sheet.createRow(sheet.getLastRowNum()+1);
+		SimpleDateFormat sdfDate = new SimpleDateFormat("dd.MM.YY");
+		int cellCounter = 0;
+		Cell cell = row.createCell(cellCounter++, CellType.NUMERIC);
+		cell.getCellStyle().setDataFormat(wb.createDataFormat().getFormat("dd.MM.YY"));
+		cell.getCellStyle().setAlignment(HorizontalAlignment.CENTER);
+		cell.setCellValue(sdfDate.format(new Date()));
+		cell = row.createCell(cellCounter++, CellType.STRING);
+		cell.setCellValue("Ticketverkauf");
+		cell = row.createCell(cellCounter++, CellType.STRING);
+		cell.setCellValue(getSafeStringValue(paymentRow, CELL_ID_BOOKING_NO) + " " + getSafeStringValue(paymentRow, CELL_ID_PAYMENT_METHOD) + " " + getSafeStringValue(paymentRow, CELL_ID_CUSTOMERNAME));
+		cell = row.createCell(cellCounter++, CellType.NUMERIC);
+		cell.getCellStyle().setDataFormat(wb.createDataFormat().getFormat("#,##0.00 €"));
+		cell.setCellValue(getSafeNumericValue(paymentRow, CELL_ID_ORDER_AMOUNT));
+	}
+	
+	private Sheet getSheet(Workbook wb, int sheetIndex) {
+		try {
+			return wb.getSheetAt(sheetIndex);
+		} catch (IllegalArgumentException e) {
+			return null;
+		}
+	}
+	
+	private String getSafeStringValue(Row row, int cellId) {
+		Cell cell = row.getCell(cellId);
+		if (cell == null) {
+			return "";
+		}
+		return cell.getStringCellValue();
+	}
+	
+	private double getSafeNumericValue(Row row, int cellId) {
+		Cell cell = row.getCell(cellId);
+		if (cell == null) {
+			return 0;
+		}
+		return cell.getNumericCellValue();
+	}
+	
 	public void insertPayment(PaymentData payment) throws IOException{
 		File paymentListFile = new File(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_PAYMENT_LIST_FILE));
 		
@@ -84,7 +144,7 @@ public class TicketPaymentHandler {
 			fis = new FileInputStream(paymentListFile);
 			wb = WorkbookFactory.create(fis);
 			
-			Sheet sheet = wb.getSheetAt(0);
+			Sheet sheet = wb.getSheetAt(SHEET_PAYMENTS);
 
 			Row row = sheet.createRow(sheet.getLastRowNum()+1);
 			SimpleDateFormat sdfDate = new SimpleDateFormat("dd.MM.YYYY");

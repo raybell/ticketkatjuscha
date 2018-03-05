@@ -6,8 +6,6 @@ import java.nio.file.Files;
 
 import org.apache.commons.lang3.StringUtils;
 
-import the.dancing.company.ticketkatjuscha.data.PaymentData;
-
 public class EmailTemplate {
 	private static String TEMPLATE_PLACEHOLDER_NAME = "%%name%%";
 	private static String TEMPLATE_PLACEHOLDER_PRICE = "%%price%%";
