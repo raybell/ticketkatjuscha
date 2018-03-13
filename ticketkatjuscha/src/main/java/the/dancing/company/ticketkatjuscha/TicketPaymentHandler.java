@@ -36,7 +36,7 @@ public class TicketPaymentHandler {
 		this.logWriter = logWriter;
 	}
 	
-	public boolean setToPaid(String bookingNo) throws IOException{
+	public boolean setToPaid(String bookingNo, Number totalSumNum) throws IOException{
 		File paymentListFile = new File(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_PAYMENT_LIST_FILE));
 		
 		if (!paymentListFile.exists()){
@@ -64,7 +64,7 @@ public class TicketPaymentHandler {
 					
 					if (Toolbox.isEmpty(oldValue) || oldValue.equalsIgnoreCase("no")) {
 						//add payment to calculation sheet
-						addPaymentToCalcSheet(wb, row);
+						addPaymentToCalcSheet(wb, row, totalSumNum);
 					}
 					
 					try(FileOutputStream fileOut = new FileOutputStream(paymentListFile)){
@@ -83,7 +83,7 @@ public class TicketPaymentHandler {
 		return false;
 	}
 	
-	private void addPaymentToCalcSheet(Workbook wb, Row paymentRow) throws IOException{
+	private void addPaymentToCalcSheet(Workbook wb, Row paymentRow, Number totalSumNum) throws IOException{
 		Sheet sheet = getSheet(wb, SHEET_CALCULATION);
 		
 		if (sheet == null) {
@@ -103,7 +103,16 @@ public class TicketPaymentHandler {
 		cell.setCellValue(getSafeStringValue(paymentRow, CELL_ID_BOOKING_NO) + " " + getSafeStringValue(paymentRow, CELL_ID_PAYMENT_METHOD) + " " + getSafeStringValue(paymentRow, CELL_ID_CUSTOMERNAME));
 		cell = row.createCell(cellCounter++, CellType.NUMERIC);
 		cell.getCellStyle().setDataFormat(wb.createDataFormat().getFormat("#,##0.00 €"));
-		cell.setCellValue(getSafeNumericValue(paymentRow, CELL_ID_ORDER_AMOUNT));
+		
+		double safeNumericValue = getSafeNumericValue(paymentRow, CELL_ID_ORDER_AMOUNT);
+		if (totalSumNum != null) {
+			if (totalSumNum.doubleValue() < safeNumericValue) {
+				throw new RuntimeException("provided total sum is smaller than overall ticket price, no no no, you can pay more, but not less.");
+			}else {
+				safeNumericValue = totalSumNum.doubleValue();
+			}
+		}
+		cell.setCellValue(safeNumericValue);
 	}
 	
 	private Sheet getSheet(Workbook wb, int sheetIndex) {

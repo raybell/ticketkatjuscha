@@ -3,6 +3,9 @@ package the.dancing.company.ticketkatjuscha.ui;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
@@ -11,9 +14,12 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.text.DecimalFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
@@ -43,6 +49,7 @@ import the.dancing.company.ticketkatjuscha.TicketPaymentHandler;
 import the.dancing.company.ticketkatjuscha.data.AdditionalCodeData.ADDITIONAL_DATA;
 import the.dancing.company.ticketkatjuscha.data.CodeData;
 import the.dancing.company.ticketkatjuscha.util.SeatTokenizer;
+import the.dancing.company.ticketkatjuscha.util.Toolbox;
 
 public class TicketOffice extends JFrame implements IToggleFieldParent{
 
@@ -62,14 +69,20 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 		JPanel filler20 = new JPanel();
 		filler20.setPreferredSize(new Dimension(20, 1));
 
+		JPanel filler50 = new JPanel();
+		filler50.setPreferredSize(new Dimension(50, 1));
+		
+		JPanel filler100 = new JPanel();
+		filler100.setPreferredSize(new Dimension(100, 1));
+		
 		JPanel filler500 = new JPanel();
 		filler500.setPreferredSize(new Dimension(500, 5));
 
 		JPanel officePanel = new JPanel();
 		officePanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 10));
 
-		officePanel.add(filler500);
-		officePanel.add(filler20);
+//		officePanel.add(filler500);
+//		officePanel.add(filler20);
 
 		JLabel lTicketAmount = new JLabel("Wieviel?");
 		officePanel.add(lTicketAmount);
@@ -211,26 +224,58 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 
 		//************ payment panel **********
 		JPanel paymentPanel = new JPanel();
-		paymentPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 10));
-		JLabel bookingNoLabel = new JLabel("Booking number");
-		paymentPanel.add(bookingNoLabel);
+		paymentPanel.setLayout(new GridBagLayout());
+		GridBagConstraints c = new GridBagConstraints();
+		JLabel bookingNoLabel = new JLabel("Buchungsnummer");
+		c.insets = new Insets(10,0,0,0);  //top padding
+		c.gridx = 0;
+		c.gridy = 0;
+		paymentPanel.add(bookingNoLabel, c);
+		c.gridx = 1;
+		c.gridy = 0;
 		JTextField bookingNoField = new JTextField(20);
-		paymentPanel.add(bookingNoField);
+		paymentPanel.add(bookingNoField, c);
+		
+		JLabel totalSumLabel = new JLabel("<html>Bezahlte Summe (optional falls<br>abweichend von Verkaufspreis)&nbsp;</html>");
+		c.gridx = 0;
+		c.gridy = 1;
+		paymentPanel.add(totalSumLabel, c);
+		JTextField totalSumField = new JTextField(20);
+		c.gridx = 1;
+		c.gridy = 1;
+		paymentPanel.add(totalSumField, c);
 		
 		JButton payTheMent = new JButton("Set to paid");
-		paymentPanel.add(payTheMent);
+		c.gridx = 1;
+		c.gridy = 3;
+		paymentPanel.add(payTheMent, c);
+		
+		c.gridx = 1;
+		c.gridy = 4;
+		c.weighty = 1;
+		paymentPanel.add(filler20, c);
 
 		payTheMent.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				 try {
-					if (new TicketPaymentHandler(System.out).setToPaid(bookingNoField.getText())) {
+					Number totalSum = null;
+					if (!Toolbox.isEmpty(totalSumField.getText())) {
+						try {
+							totalSum = DecimalFormat.getInstance(Locale.GERMAN).parse(totalSumField.getText());
+						} catch (ParseException pe) {
+							showErrorDialog("Error reading total sum '" + totalSumField.getText() + "': " + pe.getMessage());
+							return;
+						}
+					}
+					 
+					if (new TicketPaymentHandler(System.out).setToPaid(bookingNoField.getText(), totalSum)) {
 						showInfoDialog("Paid", "Booking number '" + bookingNoField.getText() + "' set to paid.");
 					}else {
 						showErrorDialog("Booking number '" + bookingNoField.getText() + "' wasn't found");
 					}
-				} catch (IOException e1) {
-					showErrorDialog("Problem setting booking no to paid: " + e1.getMessage());
+				} catch (Exception e1) {
+					showErrorDialog("Problem setting booking number to paid: " + e1.getMessage());
 				}
 			}
 		});
