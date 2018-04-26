@@ -14,6 +14,7 @@ public class EmailTemplate {
 
 	public static enum TEMPLATES {
 		TICKET_TEMPLATE(PropertyHandler.PROP_EMAIL_TEMPLATE_FILE),
+		FREE_TICKET_TEMPLATE(PropertyHandler.PROP_EMAIL_TEMPLATE_FREE_FILE),
 		NOTIFICATION_TEMPLATE(PropertyHandler.PROP_EMAIL_NOTIFICATION_TEMPLATE_FILE),
 		REVOCATION_TEMPLATE(PropertyHandler.PROP_EMAIL_REVOCATION_TEMPLATE_FILE);
 
@@ -47,9 +48,9 @@ public class EmailTemplate {
 		this.templateText = templateText;
 	}
 
-	public String evaluateEmailText(String recipientName, int ticketAmount, String seats, int price, String bookingNumber){
+	public String evaluateEmailText(String recipientName, String seats, int price, String bookingNumber){
 		return this.templateText.replaceAll(TEMPLATE_PLACEHOLDER_NAME, StringUtils.splitByWholeSeparator(recipientName, StringUtils.SPACE)[0].trim())
-		                        .replaceAll(TEMPLATE_PLACEHOLDER_PRICE, "" + (price * ticketAmount))
+		                        .replaceAll(TEMPLATE_PLACEHOLDER_PRICE, "" + price)
 		                        .replaceAll(TEMPLATE_PLACEHOLDER_SEATS, seats == null ? "" : seats)
 		                        .replaceAll(TEMPLATE_PLACEHOLDER_BOOKING_NUMBER, bookingNumber);
 	}

@@ -8,6 +8,7 @@ import java.io.StringWriter;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.util.Locale;
+import java.util.function.Function;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -18,8 +19,8 @@ import javax.ws.rs.core.Response;
 import the.dancing.company.ticketkatjuscha.ITicketProcessFailed;
 import the.dancing.company.ticketkatjuscha.TicketExpert;
 import the.dancing.company.ticketkatjuscha.TicketNotifier;
-import the.dancing.company.ticketkatjuscha.TicketNotifier.NOTIFICATION_TYPE;
 import the.dancing.company.ticketkatjuscha.TicketPaymentHandler;
+import the.dancing.company.ticketkatjuscha.util.ProcessFeedback;
 import the.dancing.company.ticketkatjuscha.util.SeatTokenizer;
 import the.dancing.company.ticketkatjuscha.util.Toolbox;
 
@@ -78,15 +79,15 @@ public class TicketRestService {
 	@GET
 	@Path("/sendPaymentReminder")
 	@Produces("text/plain")
-	public Response sendPaymentReminder(@QueryParam("seats") String seats) {
-		return sendTicketNotification(seats, NOTIFICATION_TYPE.PAYMENT_NOTIFICATION);
+	public Response sendPaymentReminder(@QueryParam("bookingnumber") String bookingnumber) {
+		return sendTicketNotification("PaymentReminder", (TicketNotifier t) -> {return t.sendReminderNotification(bookingnumber);});
 	}
 
 	@GET
 	@Path("/sendTicketRevocation")
 	@Produces("text/plain")
 	public Response sendTicketRevocation(@QueryParam("seats") String seats) {
-		return sendTicketNotification(seats, NOTIFICATION_TYPE.TICKET_REVOCATION);
+		return sendTicketNotification("TicketRevocation", (TicketNotifier t) -> {return t.sendRevocationNotification(SeatTokenizer.parseSeats(seats));});
 	}
 
 	@GET
@@ -164,10 +165,10 @@ public class TicketRestService {
 		return Response.status(HTTP_STATUSCODES_OK).entity(Toolbox.getProgVersion()).build();
 	}
 
-	private Response sendTicketNotification(String seats, NOTIFICATION_TYPE type){
+	private Response sendTicketNotification(String typeIdent, Function<TicketNotifier, Boolean> processNotification){
 		StringBuilder response = new StringBuilder();
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
+		ProcessFeedback feedback = new ProcessFeedback();
 		TicketNotifier ticketNotifier = new TicketNotifier(new ITicketProcessFailed() {
 			@Override
 			public boolean handleFailedState(String message, Exception cause) {
@@ -180,22 +181,19 @@ public class TicketRestService {
 				}
 				return false;
 			}
-		}, new PrintStream(baos));
+		}, feedback);
 
-		boolean sendNotification = ticketNotifier.sendNotification(SeatTokenizer.parseSeats(seats), type);
+		boolean sendNotification = processNotification.apply(ticketNotifier);
 
 		if (sendNotification){
-			response.append("Successfully sent " + type.getName() + " to " + ticketNotifier.getLastRecipient());
+			response.append("Successfully sent " + typeIdent + " to " + ticketNotifier.getLastRecipient());
+		}else {
+			response.append("Something went wrong. Please check the details.");
 		}
 		
-		try {
-			baos.flush();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 		
-		if (baos.size() > 0){
-			response.append("\n\n\nProcessing details:\n" + new String(baos.toByteArray()));
+		if (!Toolbox.isEmpty(feedback.getMessages())){
+			response.append("\n\n\nProcessing details:\n" + feedback.getMessages());
 		}
 
 		return Response.status(HTTP_STATUSCODES_OK).entity(response.toString()).build();

@@ -38,6 +38,7 @@ import the.dancing.company.ticketkatjuscha.data.PaymentData;
 import the.dancing.company.ticketkatjuscha.exceptions.EmailTransmissionException;
 import the.dancing.company.ticketkatjuscha.exceptions.GeneratorException;
 import the.dancing.company.ticketkatjuscha.ui.TicketOffice;
+import the.dancing.company.ticketkatjuscha.util.ProcessFeedback;
 import the.dancing.company.ticketkatjuscha.util.SeatTokenizer;
 
 public class TicketExpert {
@@ -267,7 +268,7 @@ public class TicketExpert {
 		//update seat plan
 		logWriter.println("Updating seat plan...");
 		try {
-			new SeatPlanHandler(logWriter).markSeatsAsSold(this.seats, this.ownerName, paymentData.getBookingNumber());
+			new SeatPlanHandler(new ProcessFeedback(logWriter)).markSeatsAsSold(this.seats, this.ownerName, paymentData.getBookingNumber());
 		} catch (IOException e) {
 			makeProcessingWarning(logWriter, "Seat plan wasn't updated correctly: " + e.getMessage(), e);
 		}
@@ -285,7 +286,8 @@ public class TicketExpert {
 		//generate email
 		logWriter.println("Sending email notification...");
 		try {
-			String emailText = EmailTemplate.loadTemplate(TEMPLATES.TICKET_TEMPLATE).evaluateEmailText(ownerName, amountOfTickets, null, this.price, paymentData.getBookingNumber());
+			String emailText = EmailTemplate.loadTemplate(this.price == 0 ? TEMPLATES.FREE_TICKET_TEMPLATE : TEMPLATES.TICKET_TEMPLATE)
+					                        .evaluateEmailText(ownerName, null, amountOfTickets * this.price, paymentData.getBookingNumber());
 			EmailTransmitter.transmitEmail(emailText, ticketFiles, emailRecipient, PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_EMAIL_TEMPLATE_SUBJECT));
 		} catch (IOException | EmailTransmissionException e) {
 			makeProcessingWarning(logWriter, "Could not send the email notification: " + e.getMessage(), e);

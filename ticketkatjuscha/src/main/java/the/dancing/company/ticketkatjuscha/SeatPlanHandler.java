@@ -30,6 +30,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.javatuples.Pair;
 
+import the.dancing.company.ticketkatjuscha.util.ProcessFeedback;
 import the.dancing.company.ticketkatjuscha.util.Toolbox;
 
 public class SeatPlanHandler {
@@ -41,10 +42,10 @@ public class SeatPlanHandler {
 	public static final short CELL_COLOR_TAKEN = HSSFColorPredefined.RED.getIndex();
 	public static final short CELL_COLOR_INACTIVE = HSSFColorPredefined.GREY_25_PERCENT.getIndex();
 
-	private PrintStream logWriter;
+	private ProcessFeedback feedback;
 	
-	public SeatPlanHandler(PrintStream logWriter){
-		this.logWriter = logWriter;
+	public SeatPlanHandler(ProcessFeedback feedback){
+		this.feedback = feedback;
 	}
 	
 	public void makeNewPlan() throws IOException {
@@ -239,8 +240,8 @@ public class SeatPlanHandler {
 	}
 	
 	private void log(String message){ 
-		if (this.logWriter != null){
-			logWriter.println(message);
+		if (this.feedback != null){
+			this.feedback.println(message);
 		}
 	}
 }

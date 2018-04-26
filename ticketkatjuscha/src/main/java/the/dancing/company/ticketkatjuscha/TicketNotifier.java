@@ -1,7 +1,9 @@
 package the.dancing.company.ticketkatjuscha;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -10,13 +12,23 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import org.apache.poi.EncryptedDocumentException;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.javatuples.Pair;
 
 import the.dancing.company.ticketkatjuscha.EmailTemplate.TEMPLATES;
 import the.dancing.company.ticketkatjuscha.data.AdditionalCodeData.ADDITIONAL_DATA;
 import the.dancing.company.ticketkatjuscha.data.CodeData;
 import the.dancing.company.ticketkatjuscha.exceptions.EmailTransmissionException;
+import the.dancing.company.ticketkatjuscha.util.ProcessFeedback;
 import the.dancing.company.ticketkatjuscha.util.SeatTokenizer;
+import the.dancing.company.ticketkatjuscha.util.Toolbox;
 
 /**
  * Handle ticket related notifications.
@@ -24,30 +36,79 @@ import the.dancing.company.ticketkatjuscha.util.SeatTokenizer;
  * @author marcel
  */
 public class TicketNotifier {
-	public static enum NOTIFICATION_TYPE{
-		PAYMENT_NOTIFICATION("payment reminder"),
-		TICKET_REVOCATION("ticket revocation");
-
-		private String name;
-		NOTIFICATION_TYPE(String name){
-			this.name = name;
-		}
-
-		public String getName(){
-			return name;
-		}
-	};
-
 	private ITicketProcessFailed failureHandler;
-	private PrintStream logWriter;
+	private ProcessFeedback feedback;
 	private String lastRecipient;
 
-	public TicketNotifier(ITicketProcessFailed failureHandler, PrintStream logWriter){
+	public TicketNotifier(ITicketProcessFailed failureHandler, ProcessFeedback feedback){
 		this.failureHandler = failureHandler;
-		this.logWriter = logWriter;
+		this.feedback = feedback;
 	}
-
-	public boolean sendNotification(List<Pair<String, String>> seats, NOTIFICATION_TYPE notificationType){
+	
+	public boolean sendReminderNotification(String bookingNumber){
+		File paymentListFile = new File(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_PAYMENT_LIST_FILE));
+		
+		FileInputStream fis = null;
+		Workbook wb = null;
+		try{
+			if (!paymentListFile.exists()){
+				TicketPaymentHandler.makeInitialPaymentList();
+			}
+			fis = new FileInputStream(paymentListFile);
+			wb = WorkbookFactory.create(fis);
+			
+			Sheet sheet = wb.getSheetAt(TicketPaymentHandler.SHEET_PAYMENTS);
+			for (int rowIndex = 0; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
+				Row row = sheet.getRow(rowIndex);
+				Cell cell = row.getCell(TicketPaymentHandler.CELL_ID_BOOKING_NO);
+				String sheetBookingNo = cell.getStringCellValue();
+				if (row == null || Toolbox.isEmpty(sheetBookingNo)){
+					return false;
+				}
+				if (sheetBookingNo.equalsIgnoreCase(bookingNumber)) {
+					double oldValue = Toolbox.getSafeNumericCellValue(row, TicketPaymentHandler.CELL_ID_PAIDMENT_REMINDER);
+					
+					//prepare message data
+					String subject = PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_EMAIL_NOTIFICATION_TEMPLATE_SUBJECT);
+					String emailText = EmailTemplate.loadTemplate(TEMPLATES.NOTIFICATION_TEMPLATE)
+												    .evaluateEmailText(row.getCell(TicketPaymentHandler.CELL_ID_CUSTOMERNAME).getStringCellValue(), 
+												    				   null, 
+												    				   new Double(row.getCell(TicketPaymentHandler.CELL_ID_ORDER_AMOUNT).getNumericCellValue()).intValue(), 
+												    				   bookingNumber);
+					String recipient = Toolbox.getSafeStringCellValue(row, TicketPaymentHandler.CELL_ID_CUSTOMEREMAIL);
+					
+					if (!Toolbox.isEmpty(recipient)) {
+						//send notification message
+						sendNotificationMessage(emailText, recipient, subject);
+					}else {
+						this.log("no email address found for booking number '" + bookingNumber + "' so i could not send reminder email notification");
+					}
+					this.lastRecipient = recipient;
+					
+					//update reminder counter
+					row.createCell(TicketPaymentHandler.CELL_ID_PAIDMENT_REMINDER, CellType.NUMERIC).setCellValue(oldValue + 1);
+					try(FileOutputStream fileOut = new FileOutputStream(paymentListFile)){
+						wb.write(fileOut);
+					}
+					
+					return true;
+				}
+			}
+		}catch(EncryptedDocumentException | InvalidFormatException | EmailTransmissionException | IOException e){
+			return terminateWithError("Beim Zugriff auf die Paymentliste bzw. beim Versenden der Zahlungserinnerung ist ein Fehler aufgetreten.", e);
+		}finally{
+			if (wb != null){
+				try {
+					wb.close();
+				} catch (IOException e) {
+					return terminateWithError("Beim Schliessen der Paymentliste ist ein unerwarteter Fehler aufgetreten. ", e);
+				}
+			}
+		}
+		return false;
+	}
+	
+	public boolean sendRevocationNotification(List<Pair<String, String>> seats){
 		lastRecipient = null;
 		try {
 			//load ticket codes
@@ -90,8 +151,6 @@ public class TicketNotifier {
 
 			//generate email text and send email
 			CodeData codeData = foundEmails.entrySet().iterator().next().getValue();
-			String emailtext = "";
-			String subject = "";
 
 			int price = codeData.getAdditionalCodeData().getDataAsInt(ADDITIONAL_DATA.TICKET_PRICE);
 			if (price <= 0){
@@ -100,38 +159,19 @@ public class TicketNotifier {
 			String bookingNumber = codeData.getAdditionalCodeData().getData(ADDITIONAL_DATA.TICKET_BOOKINGNUMBER);
 
 			try {
-				switch(notificationType){
-					case PAYMENT_NOTIFICATION:
-						subject = PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_EMAIL_NOTIFICATION_TEMPLATE_SUBJECT);
-						emailtext = EmailTemplate.loadTemplate(TEMPLATES.NOTIFICATION_TEMPLATE).evaluateEmailText(codeData.getName(), foundCodes.size(), null, price, bookingNumber);
-						break;
-					case TICKET_REVOCATION:
-						subject = PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_EMAIL_REVOCATION_TEMPLATE_SUBJECT);
-						emailtext = EmailTemplate.loadTemplate(TEMPLATES.REVOCATION_TEMPLATE).evaluateEmailText(codeData.getName(), foundCodes.size(), makeSeatList(foundCodes), price, bookingNumber);
-						break;
-				}
+				String subject = PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_EMAIL_REVOCATION_TEMPLATE_SUBJECT);
+				String emailtext = EmailTemplate.loadTemplate(TEMPLATES.REVOCATION_TEMPLATE).evaluateEmailText(codeData.getName(), makeSeatList(foundCodes), foundCodes.size() * price, bookingNumber);
 				String recipient = foundEmails.keySet().iterator().next(); //codeData.getAdditionalCodeData().getData(ADDITIONAL_DATA.TICKET_EMAIL);
 				EmailTransmitter.transmitEmail(emailtext, null, recipient, subject);
 				lastRecipient = recipient;
 
 				//message specific post-processing
-				switch(notificationType){
-					case PAYMENT_NOTIFICATION:
-						for (CodeData code : foundCodes) {
-							code.getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_PAYMENT_REMINDER,
-									"" + (code.getAdditionalCodeData().getDataAsInt(ADDITIONAL_DATA.TICKET_PAYMENT_REMINDER) + 1));
-						}
-						codeListHandler.saveCodeList(codeList);
-						break;
-					case TICKET_REVOCATION:
-						for (CodeData code : foundCodes) {
-							code.getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_WITHDRAWED, "true");
-						}
-						codeListHandler.saveCodeList(codeList);
-						//free seat in plan
-						new SeatPlanHandler(logWriter).freeSeats(seats);
-						break;
+				for (CodeData code : foundCodes) {
+					code.getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_WITHDRAWED, "true");
 				}
+				codeListHandler.saveCodeList(codeList);
+				//free seat in plan
+				new SeatPlanHandler(this.feedback).freeSeats(seats);
 			} catch (IOException | EmailTransmissionException e) {
 				return terminateWithError("Beim Versenden der eMail ist ein unerwarteter Fehler aufgetreten: " + e.getMessage(), e);
 			}
@@ -141,6 +181,10 @@ public class TicketNotifier {
 		}
 	}
 
+	void sendNotificationMessage(String emailText, String recipient, String subject) throws EmailTransmissionException{
+		EmailTransmitter.transmitEmail(emailText, null, recipient, subject);
+	}
+	
 	public String getLastRecipient(){
 		return this.lastRecipient;
 	}
@@ -149,7 +193,7 @@ public class TicketNotifier {
 		log(message);
 		if (e != null){
 			log("Info: " + e.toString());
-			e.printStackTrace(logWriter);
+			this.feedback.printStackTrace(e);
 		}
 
 		return failureHandler.handleFailedState(message, e);
@@ -179,8 +223,8 @@ public class TicketNotifier {
 	}
 	
 	private void log(String message){
-		if (this.logWriter != null){
-			logWriter.println(message);
+		if (this.feedback != null){
+			feedback.println(message);
 		}
 	}
 

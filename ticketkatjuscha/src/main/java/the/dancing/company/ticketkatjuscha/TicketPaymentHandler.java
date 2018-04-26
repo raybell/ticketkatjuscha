@@ -23,13 +23,15 @@ import the.dancing.company.ticketkatjuscha.data.PaymentData;
 import the.dancing.company.ticketkatjuscha.util.Toolbox;
 
 public class TicketPaymentHandler {
-	private static final int SHEET_PAYMENTS = 0;
-	private static final int SHEET_CALCULATION = 1;
-	private static final int CELL_ID_BOOKING_NO = 0;
-	private static final int CELL_ID_CUSTOMERNAME = 1;
-	private static final int CELL_ID_ORDER_AMOUNT = 4;
-	private static final int CELL_ID_PAYMENT_METHOD = 7;
-	private static final int CELL_ID_PAID = 5;
+	public static final int SHEET_PAYMENTS = 0;
+	public static final int SHEET_CALCULATION = 1;
+	public static final int CELL_ID_BOOKING_NO = 0;
+	public static final int CELL_ID_CUSTOMERNAME = 1;
+	public static final int CELL_ID_CUSTOMEREMAIL = 2;
+	public static final int CELL_ID_ORDER_AMOUNT = 4;
+	public static final int CELL_ID_PAID = 5;
+	public static final int CELL_ID_PAIDMENT_REMINDER = 6;
+	public static final int CELL_ID_PAYMENT_METHOD = 8;
 	private PrintStream logWriter;
 	
 	public TicketPaymentHandler(PrintStream logWriter){
@@ -171,6 +173,8 @@ public class TicketPaymentHandler {
 			cell = row.createCell(cellCounter++, CellType.STRING);
 			cell.setCellValue(payment.isPaid()?"yes":"no");
 			cell = row.createCell(cellCounter++, CellType.STRING);
+			cell.setCellValue("");
+			cell = row.createCell(cellCounter++, CellType.STRING);
 			cell.setCellValue(sdfDate.format(new Date(payment.getOrderDate())));
 			cell = row.createCell(cellCounter++, CellType.STRING);
 			cell.setCellValue(payment.getPaymentMethod());
@@ -195,7 +199,7 @@ public class TicketPaymentHandler {
 		}
 	}
 	
-	public void makeInitialPaymentList() throws IOException{
+	public static void makeInitialPaymentList() throws IOException{
 		File paymentListFile = new File(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_PAYMENT_LIST_FILE));
 		
 		//backup old plan
@@ -219,6 +223,8 @@ public class TicketPaymentHandler {
 			cell.setCellValue("Order amount");
 			cell = row.createCell(cellCounter++, CellType.STRING);
 			cell.setCellValue("Paid");
+			cell = row.createCell(cellCounter++, CellType.STRING);
+			cell.setCellValue("Payment Reminder");
 			cell = row.createCell(cellCounter++, CellType.STRING);
 			cell.setCellValue("Order date");
 			cell = row.createCell(cellCounter++, CellType.STRING);
