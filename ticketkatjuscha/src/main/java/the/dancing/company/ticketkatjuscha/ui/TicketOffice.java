@@ -153,7 +153,7 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 					return;
 				}
 				if (!isFilled(tfTicketOwner)){
-					showErrorDialog("Wie heißt der Sack / die Säckin?");
+					showErrorDialog("Hat er/sie einen Namen? Dann gib ihn mir, Amen.");
 					return;
 				}
 
@@ -442,6 +442,10 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 			boolean sendSuccessFull = ticketNotifier.sendReminderNotification(bookingNoField.getText());
 			if (sendSuccessFull){
 				showInfoDialog("Geschafft", "Zahlungserinnerung wurde verschickt." + (!Toolbox.isEmpty(feedback.getMessages()) ? "\n\nHinweis: " + feedback.getMessages() : ""));
+			}else {
+				showErrorDialog("Zahlungserinnerung konnte nicht verschickt werden. Entweder stimmt etwas mit dem Zahlungsdokument '"
+						+ PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_PAYMENT_LIST_FILE)
+						+ "' nicht oder die Buchungsnummer konnte nicht gefunden werden.");
 			}
 		}else{
 			showErrorDialog("NoNoNo, so nicht. Ich brauch ne Buchungsnummer von dir.");

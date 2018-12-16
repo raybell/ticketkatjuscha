@@ -4,6 +4,7 @@ import java.io.File;
 import java.net.URL;
 import java.util.jar.Manifest;
 
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
 
 public class Toolbox {
@@ -53,6 +54,6 @@ public class Toolbox {
 	}
 	
 	public static double getSafeNumericCellValue(Row row, int cellId) {
-		return row.getCell(cellId) == null ? 0 : row.getCell(cellId).getNumericCellValue();
+		return row.getCell(cellId) == null || row.getCell(cellId).getCellTypeEnum() != CellType.NUMERIC ? 0 : row.getCell(cellId).getNumericCellValue();
 	}
 }
