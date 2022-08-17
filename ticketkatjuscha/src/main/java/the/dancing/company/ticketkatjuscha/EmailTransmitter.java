@@ -10,6 +10,7 @@ import javax.activation.FileDataSource;
 import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.Multipart;
+import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
@@ -24,11 +25,19 @@ public class EmailTransmitter {
 	public static void transmitEmail(String emailtext, List<File> ticketFiles, String emailRecipient, String subject) throws EmailTransmissionException{
 		Properties props = PropertyHandler.getInstance().getProperties();
 
-        Session session = Session.getDefaultInstance(props);
+//        Session session = Session.getDefaultInstance(props);
+		PropertyHandler propHandler = PropertyHandler.getInstance();
+        
+        Session session = Session.getDefaultInstance(props,
+                new javax.mail.Authenticator() {
+                  protected PasswordAuthentication getPasswordAuthentication() {
+                      return new PasswordAuthentication(propHandler.getPropertyString(PropertyHandler.PROP_EMAIL_USER), propHandler.getPropertyString(PropertyHandler.PROP_EMAIL_PASSWORD));
+                }
+              });
+        
         MimeMessage message = new MimeMessage(session);
         
         try{
-        	PropertyHandler propHandler = PropertyHandler.getInstance();
             message.setFrom(new InternetAddress(propHandler.getPropertyString(PropertyHandler.PROP_EMAIL_USER), propHandler.getPropertyString(PropertyHandler.PROP_EMAIL_SENDERNAME)));
             InternetAddress toAddress =  null;
             InternetAddress ccAddress = null;
@@ -75,9 +84,11 @@ public class EmailTransmitter {
             
             message.setContent(multipart);
             
-            Transport transport = session.getTransport("smtp");
-            transport.connect(propHandler.getPropertyString(PropertyHandler.PROP_EMAIL_USER), propHandler.getPropertyString(PropertyHandler.PROP_EMAIL_PASSWORD));
-            transport.sendMessage(message, message.getAllRecipients());
+            Transport.send(message);
+            
+//            Transport transport = session.getTransport("smtp");
+//            transport.connect(propHandler.getPropertyString(PropertyHandler.PROP_EMAIL_USER), propHandler.getPropertyString(PropertyHandler.PROP_EMAIL_PASSWORD));
+//            transport.sendMessage(message, message.getAllRecipients());
         }
         catch (MessagingException | UnsupportedEncodingException e) {
             throw new EmailTransmissionException("jo jo jo, es geht nicht hin, wo es soll...", e);
