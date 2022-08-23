@@ -93,12 +93,12 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 
 		JLabel lTicketOwner = new JLabel("Für wen?");
 		officePanel.add(lTicketOwner);
-		JTextField tfTicketOwner = new JTextField(7);
+		JTextField tfTicketOwner = new JTextField(10);
 		officePanel.add(tfTicketOwner);
 
 		JLabel lTicketRecipient = new JLabel("Wohin?");
 		officePanel.add(lTicketRecipient);
-		JTextField tfTicketRecipient = new JTextField(7);
+		JTextField tfTicketRecipient = new JTextField(13);
 		officePanel.add(tfTicketRecipient);
 
 		officePanel.add(filler20);
@@ -199,23 +199,29 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 		ticketNotifyPanel.setLayout(new GridBagLayout());
 		GridBagConstraints tnpC = new GridBagConstraints();
 		JLabel notPanBookingNoLabel = new JLabel("Buchungsnummer");
-		tnpC.insets = new Insets(8,0,0,0);  //top padding
+		tnpC.insets = new Insets(15,7,0,0);
 		tnpC.anchor = GridBagConstraints.WEST;
 		tnpC.gridx = 0;
 		tnpC.gridy = 0;
+		tnpC.weightx = 1;
+		tnpC.fill = GridBagConstraints.NONE;
 		ticketNotifyPanel.add(notPanBookingNoLabel, tnpC);
-		tnpC.anchor = GridBagConstraints.CENTER;
+		
+		tnpC.anchor = GridBagConstraints.WEST;
 		tnpC.gridx = 1;
 		tnpC.gridy = 0;
+		tnpC.weightx = 10;
+		tnpC.fill = GridBagConstraints.HORIZONTAL;
 		JTextField notPanBookingNoField = new JTextField(20);
 		ticketNotifyPanel.add(notPanBookingNoField, tnpC);
 		
 		JButton sendPaymentNotification = new JButton("Zahlungserinnerung");
-		tnpC.gridx = 0;
-		tnpC.gridy = 1;
-		tnpC.gridwidth = 2;
+		tnpC.anchor = GridBagConstraints.WEST;
+		tnpC.gridx = 2;
+		tnpC.gridy = 0;
+		tnpC.weightx = 1;
+		tnpC.fill = GridBagConstraints.NONE;
 		ticketNotifyPanel.add(sendPaymentNotification, tnpC);
-		tnpC.gridwidth = 1;
 		
 //		ticketNotifyPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 10));
 //		JLabel ticketNotifySeatsLabel = new JLabel("Sitzplätze (Format: Reihe1.Sitz1,Reihe2.Sitz2)");
@@ -231,20 +237,21 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 		});
 
 		JLabel ticketNotifySeatsLabel = new JLabel("<html>Sitzplätze<br>(Format: Reihe1.Sitz1,Reihe2.Sitz2)&nbsp;</html>");
+		tnpC.insets = new Insets(5,5,0,0);
 		tnpC.gridx = 0;
 		tnpC.gridy = 2;
+		tnpC.fill = GridBagConstraints.NONE;
 		ticketNotifyPanel.add(ticketNotifySeatsLabel, tnpC);
 		tnpC.gridx = 1;
 		tnpC.gridy = 2;
+		tnpC.fill = GridBagConstraints.HORIZONTAL;
 		JTextField ticketNotifySeatsField = new JTextField(20);
 		ticketNotifyPanel.add(ticketNotifySeatsField, tnpC);
-		
-		tnpC.gridx = 0;
-		tnpC.gridy = 3;
-		tnpC.gridwidth = 2;
+		tnpC.gridx = 2;
+		tnpC.gridy = 2;
+		tnpC.fill = GridBagConstraints.NONE;
 		JButton sendTicketRevocation = new JButton("Ticketschredder");
 		ticketNotifyPanel.add(sendTicketRevocation, tnpC);
-		tnpC.gridwidth = 1;
 
 		sendTicketRevocation.addActionListener(new ActionListener() {
 			@Override
@@ -253,9 +260,12 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 			}
 		});
 		
-		tnpC.gridx = 1;
-		tnpC.gridy = 4;
+		tnpC.gridx = 0;
+		tnpC.gridy = 3;
+		tnpC.gridwidth = GridBagConstraints.REMAINDER;
+		tnpC.gridheight = GridBagConstraints.REMAINDER;
 		tnpC.weighty = 1;
+		tnpC.fill = GridBagConstraints.VERTICAL;
 		ticketNotifyPanel.add(filler50, tnpC);
 
 		tabPanel.addTab("Ticket BackOffice", ticketNotifyPanel);
@@ -265,7 +275,7 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 		paymentPanel.setLayout(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
 		JLabel bookingNoLabel = new JLabel("Buchungsnummer");
-		c.insets = new Insets(10,0,0,0);  //top padding
+		c.insets = new Insets(15,0,0,0);  //top padding
 		c.anchor = GridBagConstraints.WEST;
 		c.gridx = 0;
 		c.gridy = 0;
@@ -277,6 +287,7 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 		paymentPanel.add(bookingNoField, c);
 		
 		JLabel totalSumLabel = new JLabel("<html>Bezahlte Summe (optional falls<br>abweichend von Verkaufspreis)&nbsp;</html>");
+		c.insets = new Insets(10,0,0,0);  //top padding
 		c.gridx = 0;
 		c.gridy = 1;
 		paymentPanel.add(totalSumLabel, c);
