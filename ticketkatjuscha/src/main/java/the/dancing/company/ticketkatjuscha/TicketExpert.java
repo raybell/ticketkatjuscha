@@ -157,9 +157,11 @@ public class TicketExpert {
 		this.emailRecipient = recipient;
 		this.price = price >= 0 ? price : PropertyHandler.getInstance().getPropertyInt(PropertyHandler.PROP_TICKET_PRICE);
 		//check the seats
-		if (seats == null || seats.size() != amountOfTickets){
+		if (!PropertyHandler.getInstance().getPropertyBoolean(PropertyHandler.PROP_FREESEATSELECTION) && (seats == null || seats.size() != amountOfTickets)){
 			//seats does not fit amount of tickets
 			throw new IllegalArgumentException("Problääääm. Seats does not fit the ticket amount.");
+		}else {
+			this.seats = new ArrayList<>();
 		}
 		this.ticketGenerator = new PDFTicketGenerator();
 	}
@@ -180,7 +182,7 @@ public class TicketExpert {
 			codeGenerator = new CodeGenerator(ownerName);
 
 			//check if the seats are still free
-			if (!codeGenerator.checkIfSeatsAreFree(this.seats)){
+			if (!PropertyHandler.getInstance().getPropertyBoolean(PropertyHandler.PROP_FREESEATSELECTION) && !codeGenerator.checkIfSeatsAreFree(this.seats)){
 				return terminateWithError("Problääääm. One or more of the seats haben already einen sitzen.", null, false, failHandler);
 			}
 
@@ -216,7 +218,7 @@ public class TicketExpert {
 				outputStream = new FileOutputStream(tmpFile);
 				CodeData newCodeData = newCodes.get(newCode);
 				this.ticketGenerator.generate(newCode, newCodeData.getCheckCode(), newCodeData.getName(),
-						                     SeatTokenizer.parseSeats(newCodeData.getAdditionalCodeData().getData(ADDITIONAL_DATA.TICKET_SEAT)).get(0),
+											 !PropertyHandler.getInstance().getPropertyBoolean(PropertyHandler.PROP_FREESEATSELECTION) ? SeatTokenizer.parseSeats(newCodeData.getAdditionalCodeData().getData(ADDITIONAL_DATA.TICKET_SEAT)).get(0) : null,
 						                     newCodeData.getAdditionalCodeData().getDataAsInt(ADDITIONAL_DATA.TICKET_PRICE),
 						                     outputStream);
 			} catch (IOException e) {
@@ -265,12 +267,14 @@ public class TicketExpert {
 			return terminateWithError("Problääääm. Could not write new ticket codes.", e, true, failHandler);
 		}
 		
-		//update seat plan
-		logWriter.println("Updating seat plan...");
-		try {
-			new SeatPlanHandler(new ProcessFeedback(logWriter)).markSeatsAsSold(this.seats, this.ownerName, paymentData.getBookingNumber());
-		} catch (IOException e) {
-			makeProcessingWarning(logWriter, "Seat plan wasn't updated correctly: " + e.getMessage(), e);
+		if (!PropertyHandler.getInstance().getPropertyBoolean(PropertyHandler.PROP_FREESEATSELECTION)) {
+			//update seat plan
+			logWriter.println("Updating seat plan...");
+			try {
+				new SeatPlanHandler(new ProcessFeedback(logWriter)).markSeatsAsSold(this.seats, this.ownerName, paymentData.getBookingNumber());
+			} catch (IOException e) {
+				makeProcessingWarning(logWriter, "Seat plan wasn't updated correctly: " + e.getMessage(), e);
+			}
 		}
 
 		//update list of payments

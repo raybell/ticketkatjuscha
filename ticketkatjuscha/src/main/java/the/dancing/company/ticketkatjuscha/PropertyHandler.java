@@ -36,6 +36,8 @@ public class PropertyHandler {
 	public static final String PROP_EMAIL_USER = "mail.smtp.user";
 	public static final String PROP_EMAIL_SENDERNAME = "mail.smtp.sendername";
 	public static final String PROP_EMAIL_PASSWORD = "mail.smtp.password";
+	
+	public static final String PROP_FREESEATSELECTION = "freeSeatSelection";
 
 	private static final String[][] PROP_DEFAULT_VALUES = new String[][]{
 		{PROP_TICKET_NAME_PREFIX, "ticket"},
@@ -144,6 +146,15 @@ public class PropertyHandler {
 			return Integer.parseInt(getAndSetDefault(propName));
 		}
 	}
+	
+	public boolean getPropertyBoolean(String propName) {
+		if (props.containsKey(propName)) {
+			return Boolean.parseBoolean(props.getProperty(propName));
+		}else {
+			return false;
+		}
+	}
+	
 	public Properties getProperties(){
 		return props;
 	}

@@ -80,15 +80,17 @@ public class PDFTicketGenerator implements TicketGenerator {
             drawText(ticketOwnerName, getElementPos(PROP_TICKET_POS_NAME, COORDINATES.x), 
             		                  height - getElementPos(PROP_TICKET_POS_NAME, COORDINATES.y), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
 
-            // row
-            //drawText(seat.getValue0(), mm2point(52.0f), height - mm2point(73.5f), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
-            drawText(seat.getValue0(), getElementPos(PROP_TICKET_POS_ROW, COORDINATES.x), 
-            		                   height - getElementPos(PROP_TICKET_POS_ROW, COORDINATES.y), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
-
-            //seat
-            //drawText(seat.getValue1(), mm2point(98.0f), height - mm2point(73.5f), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
-            drawText(seat.getValue1(), getElementPos(PROP_TICKET_POS_SEAT, COORDINATES.x), 
-            		                   height - getElementPos(PROP_TICKET_POS_SEAT, COORDINATES.y), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
+            if (!PropertyHandler.getInstance().getPropertyBoolean(PropertyHandler.PROP_FREESEATSELECTION)) {
+	            // row
+	            //drawText(seat.getValue0(), mm2point(52.0f), height - mm2point(73.5f), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
+	            drawText(seat.getValue0(), getElementPos(PROP_TICKET_POS_ROW, COORDINATES.x), 
+	            		                   height - getElementPos(PROP_TICKET_POS_ROW, COORDINATES.y), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
+	
+	            //seat
+	            //drawText(seat.getValue1(), mm2point(98.0f), height - mm2point(73.5f), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
+	            drawText(seat.getValue1(), getElementPos(PROP_TICKET_POS_SEAT, COORDINATES.x), 
+	            		                   height - getElementPos(PROP_TICKET_POS_SEAT, COORDINATES.y), 0, PdfContentByte.ALIGN_LEFT, baseFont, 11.0f, cb);
+            }
 
             //prices
             DecimalFormat df = new DecimalFormat("#,##0.00");

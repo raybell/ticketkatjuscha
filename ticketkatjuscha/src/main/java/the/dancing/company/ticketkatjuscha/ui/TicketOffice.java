@@ -117,6 +117,12 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 		officePanel.add(lSeats);
 		JTextField tfSeats = new JTextField(20);
 		officePanel.add(tfSeats);
+		
+		if (PropertyHandler.getInstance().getPropertyBoolean(PropertyHandler.PROP_FREESEATSELECTION)) {
+			tfSeats.setEnabled(false);
+			tfSeats.setText("Wer zuerst kommt....");
+			tfSeats.setToolTipText("...kriegt die besten Plätze. Freie Platzwahl für alle.");
+		}
 
 		JButton makeTickets = new JButton("Gib's mir");
 		officePanel.add(makeTickets);
@@ -135,22 +141,24 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 					showErrorDialog("Ich glaub du willst mit mir spielen. Gib mir eine Zahl, nicht zu gross, nicht zu klein, irgendwas dazwischen.");
 					return;
 				}
-				List<Pair<String, String>> seats;
-				if (isFilled(tfSeats)){
-					//check seats
-					try {
-						seats = SeatTokenizer.parseSeats(tfSeats.getText());
-						if (seats.size() != ticketAmount){
-							showErrorDialog("Es gibt nicht genug oder viel zu viele Plätze für deine Gäste. Wir brauchen " + ticketAmount + ", aber du willst mir " + seats.size() + " geben. Das geht so nicht.");
+				List<Pair<String, String>> seats = null;
+				if (!PropertyHandler.getInstance().getPropertyBoolean(PropertyHandler.PROP_FREESEATSELECTION)) {
+					if (isFilled(tfSeats)){
+						//check seats
+						try {
+							seats = SeatTokenizer.parseSeats(tfSeats.getText());
+							if (seats.size() != ticketAmount){
+								showErrorDialog("Es gibt nicht genug oder viel zu viele Plätze für deine Gäste. Wir brauchen " + ticketAmount + ", aber du willst mir " + seats.size() + " geben. Das geht so nicht.");
+								return;
+							}
+						} catch (NoSuchElementException e1) {
+							showErrorDialog("Das sind aber komische Sitze, ich glaube nicht dass Gäste darauf ihren Platz finden werden.");
 							return;
 						}
-					} catch (NoSuchElementException e1) {
-						showErrorDialog("Das sind aber komische Sitze, ich glaube nicht dass Gäste darauf ihren Platz finden werden.");
+					}else{
+						showErrorDialog("Wo sollen sie alle nur sitzen? Oder sollen sie alle stehen? Nein, das können wir ihnen nicht antun!");
 						return;
 					}
-				}else{
-					showErrorDialog("Wo sollen sie alle nur sitzen? Oder sollen sie alle stehen? Nein, das können wir ihnen nicht antun!");
-					return;
 				}
 				if (!isFilled(tfTicketOwner)){
 					showErrorDialog("Hat er/sie einen Namen? Dann gib ihn mir, Amen.");
@@ -191,6 +199,10 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 				}
 			}
 		});
+		if (PropertyHandler.getInstance().getPropertyBoolean(PropertyHandler.PROP_FREESEATSELECTION)) {
+			seatPlanButton.setEnabled(false);
+			seatPlanButton.setToolTipText("Ich denk das brauchen wir nicht. Jeder kann sich dort hinhocken wo er/sie/es grad steht und noch niemand anderes sein Lager aufgeschlagen hat.");
+		}
 		
 		tabPanel.addTab("Ticket Office", officePanel);
 
