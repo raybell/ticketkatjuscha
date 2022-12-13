@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.apache.poi.EncryptedDocumentException;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -109,7 +111,22 @@ public class TicketNotifier {
 	}
 	
 	public boolean sendRevocationNotification(List<Pair<String, String>> seats){
+		return sendRevocationNotification(codeData -> {
+			String seat = codeData.getAdditionalCodeData().getData(ADDITIONAL_DATA.TICKET_SEAT);
+			return seats.containsAll(SeatTokenizer.parseSeats(seat));
+		});
+	}
+	
+	public boolean sendRevocationNotification(String bookingNumber){
+		return sendRevocationNotification(codeData -> {
+			String codeBookingNo = codeData.getAdditionalCodeData().getData(ADDITIONAL_DATA.TICKET_BOOKINGNUMBER);
+			return bookingNumber.equals(codeBookingNo);
+		});
+	}
+	
+	public boolean sendRevocationNotification(Function<CodeData,Boolean> checkCodeRevocation){
 		lastRecipient = null;
+		List<Pair<String, String>> revokedSeats = new ArrayList<>();
 		try {
 			//load ticket codes
 			ICodeListHandler codeListHandler = CodeListHandlerFactory.produceHandler();
@@ -123,10 +140,19 @@ public class TicketNotifier {
 			//get assigned email addresses
 			Map<String, CodeData> foundEmails = new HashMap<>();
 			Set<CodeData> foundCodes = new HashSet<>();
+			Boolean alreadyRevoked = null;
 			for (CodeData codeData : codeList.values()) {
-				String seat = codeData.getAdditionalCodeData().getData(ADDITIONAL_DATA.TICKET_SEAT);
-				boolean withdrawed = codeData.getAdditionalCodeData().getDataAsBoolean(ADDITIONAL_DATA.TICKET_WITHDRAWED);
-				if (!withdrawed && seats.containsAll(SeatTokenizer.parseSeats(seat))){
+				if (checkCodeRevocation.apply(codeData)){
+					boolean withdrawed = codeData.getAdditionalCodeData().getDataAsBoolean(ADDITIONAL_DATA.TICKET_WITHDRAWED);
+					if (withdrawed) {
+						alreadyRevoked = (alreadyRevoked == null) ? Boolean.TRUE : alreadyRevoked;
+						continue;
+					}else {
+						alreadyRevoked = Boolean.FALSE;
+					}
+					
+					String seat = codeData.getAdditionalCodeData().getData(ADDITIONAL_DATA.TICKET_SEAT);
+					revokedSeats.addAll(SeatTokenizer.parseSeats(seat));
 					String email = codeData.getAdditionalCodeData().getData(ADDITIONAL_DATA.TICKET_EMAIL);
 					if (email != null && email.trim().length() > 0){
 						foundEmails.put(email, codeData);
@@ -139,6 +165,9 @@ public class TicketNotifier {
 				}
 			}
 
+			if (alreadyRevoked == Boolean.TRUE) {
+				return terminateWithError("tickets bereits geschreddert", null);
+			}
 			if (foundEmails.size() == 0){
 				//no emails found
 				return terminateWithError("no email addresses found", null);
@@ -170,8 +199,11 @@ public class TicketNotifier {
 					code.getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_WITHDRAWED, "true");
 				}
 				codeListHandler.saveCodeList(codeList);
-				//free seat in plan
-				new SeatPlanHandler(this.feedback).freeSeats(seats);
+				
+				if (!PropertyHandler.getInstance().getPropertyBoolean(PropertyHandler.PROP_FREESEATSELECTION)) {
+					//free seat in plan
+					new SeatPlanHandler(this.feedback).freeSeats(revokedSeats);
+				}
 			} catch (IOException | EmailTransmissionException e) {
 				return terminateWithError("Beim Versenden der eMail ist ein unerwarteter Fehler aufgetreten: " + e.getMessage(), e);
 			}

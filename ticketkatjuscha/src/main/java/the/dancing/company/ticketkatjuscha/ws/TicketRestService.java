@@ -86,8 +86,15 @@ public class TicketRestService {
 	@GET
 	@Path("/sendTicketRevocation")
 	@Produces("text/plain")
-	public Response sendTicketRevocation(@QueryParam("seats") String seats) {
+	public Response sendTicketRevocationForSeats(@QueryParam("seats") String seats) {
 		return sendTicketNotification("TicketRevocation", (TicketNotifier t) -> {return t.sendRevocationNotification(SeatTokenizer.parseSeats(seats));});
+	}
+	
+	@GET
+	@Path("/sendTicketRevocation")
+	@Produces("text/plain")
+	public Response sendTicketRevocationForBookingNo(@QueryParam("bookingNo") String bookingNo) {
+		return sendTicketNotification("TicketRevocation", (TicketNotifier t) -> {return t.sendRevocationNotification(bookingNo);});
 	}
 
 	@GET
