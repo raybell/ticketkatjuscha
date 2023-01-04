@@ -45,12 +45,12 @@ public class PDFTicketGenerator implements TicketGenerator {
     }
 
     @Override
-    public void generate(String code, String checkCode, String ticketOwnerName, Pair<String, String> seat, int price, OutputStream output) throws IOException, DocumentException {
+    public void generate(String code, String checkCode, String ticketOwnerName, Pair<String, String> seat, double price, OutputStream output) throws IOException, DocumentException {
         InputStream is = new FileInputStream(PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_TEMPLATE_FILE));
         generate(code, checkCode, ticketOwnerName, seat, price, output, is);
     }
 
-    public void generate(String code, String checkCode, String ticketOwnerName, Pair<String, String> seat, int price, OutputStream output, InputStream templateStream) throws IOException, DocumentException {
+    public void generate(String code, String checkCode, String ticketOwnerName, Pair<String, String> seat, double price, OutputStream output, InputStream templateStream) throws IOException, DocumentException {
 
         PdfReader reader = new PdfReader(templateStream);
 

@@ -167,9 +167,9 @@ public class TicketPaymentHandler {
 			cell = row.createCell(cellCounter++, CellType.STRING);
 			cell.setCellValue(payment.getCustomerEmail());
 			cell = row.createCell(cellCounter++, CellType.STRING);
-			cell.setCellValue(payment.getNumberOfTickets());
+			cell.setCellValue(payment.getTicketOrdering().getTicketAmountSumUp());
 			cell = row.createCell(cellCounter++, CellType.STRING);
-			cell.setCellValue(payment.getOrderPrice());
+			cell.setCellValue(payment.getTicketOrdering().getTicketPriceSumUp());
 			cell = row.createCell(cellCounter++, CellType.STRING);
 			cell.setCellValue(payment.isPaid()?"yes":"no");
 			cell = row.createCell(cellCounter++, CellType.STRING);

@@ -4,8 +4,7 @@ public class PaymentData {
 	private String bookingNumber = "";
 	private String customerName = "";
 	private String customerEmail = "";
-	private int numberOfTickets = 0;
-	private long orderPrice = 0;
+	private TicketOrdering ticketOrdering;
 	private long orderDate = 0;
 	private boolean paid = false;
 	private String paymentMethod = "";
@@ -29,18 +28,6 @@ public class PaymentData {
 	}
 	public void setCustomerEmail(String customerEmail) {
 		this.customerEmail = customerEmail;
-	}
-	public int getNumberOfTickets() {
-		return numberOfTickets;
-	}
-	public void setNumberOfTickets(int numberOfTickets) {
-		this.numberOfTickets = numberOfTickets;
-	}
-	public long getOrderPrice() {
-		return orderPrice;
-	}
-	public void setOrderPrice(long orderPrice) {
-		this.orderPrice = orderPrice;
 	}
 	public long getOrderDate() {
 		return orderDate;
@@ -71,5 +58,11 @@ public class PaymentData {
 	}
 	public void setCommunity(String community) {
 		this.community = community;
+	}
+	public TicketOrdering getTicketOrdering() {
+		return ticketOrdering;
+	}
+	public void setTicketOrdering(TicketOrdering ticketOrdering) {
+		this.ticketOrdering = ticketOrdering;
 	}
 }

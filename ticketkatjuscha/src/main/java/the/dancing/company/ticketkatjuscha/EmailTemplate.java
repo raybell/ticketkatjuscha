@@ -6,6 +6,8 @@ import java.nio.file.Files;
 
 import org.apache.commons.lang3.StringUtils;
 
+import the.dancing.company.ticketkatjuscha.util.PriceFormatter;
+
 public class EmailTemplate {
 	private static String TEMPLATE_PLACEHOLDER_NAME = "%%name%%";
 	private static String TEMPLATE_PLACEHOLDER_PRICE = "%%price%%";
@@ -48,9 +50,9 @@ public class EmailTemplate {
 		this.templateText = templateText;
 	}
 
-	public String evaluateEmailText(String recipientName, String seats, int price, String bookingNumber){
+	public String evaluateEmailText(String recipientName, String seats, double price, String bookingNumber){
 		return this.templateText.replaceAll(TEMPLATE_PLACEHOLDER_NAME, StringUtils.splitByWholeSeparator(recipientName, StringUtils.SPACE)[0].trim())
-		                        .replaceAll(TEMPLATE_PLACEHOLDER_PRICE, "" + price)
+		                        .replaceAll(TEMPLATE_PLACEHOLDER_PRICE, PriceFormatter.formatTicketPrice(price))
 		                        .replaceAll(TEMPLATE_PLACEHOLDER_SEATS, seats == null ? "" : seats)
 		                        .replaceAll(TEMPLATE_PLACEHOLDER_BOOKING_NUMBER, bookingNumber);
 	}

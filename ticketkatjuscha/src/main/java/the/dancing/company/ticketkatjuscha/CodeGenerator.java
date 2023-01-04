@@ -13,11 +13,13 @@ import org.javatuples.Pair;
 
 import the.dancing.company.ticketkatjuscha.data.AdditionalCodeData;
 import the.dancing.company.ticketkatjuscha.data.AdditionalCodeData.ADDITIONAL_DATA;
-import the.dancing.company.ticketkatjuscha.exceptions.GeneratorException;
-import the.dancing.company.ticketkatjuscha.util.SeatTokenizer;
 import the.dancing.company.ticketkatjuscha.data.CodeData;
 import the.dancing.company.ticketkatjuscha.data.PaymentData;
 import the.dancing.company.ticketkatjuscha.data.Ticket;
+import the.dancing.company.ticketkatjuscha.data.TicketOrder;
+import the.dancing.company.ticketkatjuscha.exceptions.GeneratorException;
+import the.dancing.company.ticketkatjuscha.util.PriceFormatter;
+import the.dancing.company.ticketkatjuscha.util.SeatTokenizer;
 
 public class CodeGenerator {
 	private String owner;
@@ -36,25 +38,30 @@ public class CodeGenerator {
 		}
 	}
 
-	public HashMap<String, CodeData> generateNewTicketCodes(List<Pair<String, String>> seats, int price, PaymentData paymentData) throws GeneratorException{
+	public HashMap<String, CodeData> generateNewTicketCodes(List<Pair<String, String>> seats, PaymentData paymentData) throws GeneratorException{
 		try {
 			HashMap<String, CodeData> newCodeList = new HashMap<>();
-			for (int i = 0; i < paymentData.getNumberOfTickets(); i++) {
-				Ticket newTicket = generateNewCode();
-				newTicket.getCodeData().getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_SEAT, !PropertyHandler.getInstance().getPropertyBoolean(PropertyHandler.PROP_FREESEATSELECTION) ? SeatTokenizer.makeSeatToken(seats.get(i)) : "");
-				newTicket.getCodeData().getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_EMAIL, paymentData.getCustomerEmail());
-				newTicket.getCodeData().getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_PRICE, "" + price);
-				newTicket.getCodeData().getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_BOOKINGNUMBER, "" + paymentData.getBookingNumber());
-				
-				newCodeList.put(newTicket.getCode(), newTicket.getCodeData());
-				codeList.put(newTicket.getCode(), newTicket.getCodeData());
+			
+			List<TicketOrder> ticketOrders = paymentData.getTicketOrdering().getTicketOrders();
+			for (TicketOrder ticketOrder : ticketOrders) {
+				for (int i = 0; i < ticketOrder.getTicketAmount(); i++) {
+					Ticket newTicket = generateNewCode();
+					newTicket.getCodeData().getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_SEAT, !PropertyHandler.getInstance().getPropertyBoolean(PropertyHandler.PROP_FREESEATSELECTION) ? SeatTokenizer.makeSeatToken(seats.get(i)) : "");
+					newTicket.getCodeData().getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_EMAIL, paymentData.getCustomerEmail());
+					newTicket.getCodeData().getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_PRICE, PriceFormatter.formatTicketPrice(ticketOrder.getTicketPrice()));
+					newTicket.getCodeData().getAdditionalCodeData().setAdditionalData(ADDITIONAL_DATA.TICKET_BOOKINGNUMBER, "" + paymentData.getBookingNumber());
+					
+					newCodeList.put(newTicket.getCode(), newTicket.getCodeData());
+					codeList.put(newTicket.getCode(), newTicket.getCodeData());
+				}
 			}
+			
 			return newCodeList;
 		} catch (EncryptedDocumentException e) {
 			throw new GeneratorException(e);
 		}
 	}
-
+	
 	public void writeTicketCodes() throws GeneratorException{
 		if (codeList.size() == 0){
 			//nothing to save

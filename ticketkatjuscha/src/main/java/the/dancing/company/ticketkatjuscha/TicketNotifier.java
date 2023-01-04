@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -75,7 +76,7 @@ public class TicketNotifier {
 					String emailText = EmailTemplate.loadTemplate(TEMPLATES.NOTIFICATION_TEMPLATE)
 												    .evaluateEmailText(row.getCell(TicketPaymentHandler.CELL_ID_CUSTOMERNAME).getStringCellValue(), 
 												    				   null, 
-												    				   new Double(row.getCell(TicketPaymentHandler.CELL_ID_ORDER_AMOUNT).getNumericCellValue()).intValue(), 
+												    				   new Double(row.getCell(TicketPaymentHandler.CELL_ID_ORDER_AMOUNT).getNumericCellValue()).doubleValue(), 
 												    				   bookingNumber);
 					String recipient = Toolbox.getSafeStringCellValue(row, TicketPaymentHandler.CELL_ID_CUSTOMEREMAIL);
 					
@@ -181,15 +182,11 @@ public class TicketNotifier {
 			//generate email text and send email
 			CodeData codeData = foundEmails.entrySet().iterator().next().getValue();
 
-			int price = codeData.getAdditionalCodeData().getDataAsInt(ADDITIONAL_DATA.TICKET_PRICE);
-			if (price <= 0){
-				price = PropertyHandler.getInstance().getPropertyInt(PropertyHandler.PROP_TICKET_PRICE);
-			}
 			String bookingNumber = codeData.getAdditionalCodeData().getData(ADDITIONAL_DATA.TICKET_BOOKINGNUMBER);
 
 			try {
 				String subject = PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_EMAIL_REVOCATION_TEMPLATE_SUBJECT);
-				String emailtext = EmailTemplate.loadTemplate(TEMPLATES.REVOCATION_TEMPLATE).evaluateEmailText(codeData.getName(), makeSeatList(foundCodes), foundCodes.size() * price, bookingNumber);
+				String emailtext = EmailTemplate.loadTemplate(TEMPLATES.REVOCATION_TEMPLATE).evaluateEmailText(codeData.getName(), makeSeatList(foundCodes), calcCompletePrice(foundCodes), bookingNumber);
 				String recipient = foundEmails.keySet().iterator().next(); //codeData.getAdditionalCodeData().getData(ADDITIONAL_DATA.TICKET_EMAIL);
 				EmailTransmitter.transmitEmail(emailtext, null, recipient, subject);
 				lastRecipient = recipient;
@@ -211,6 +208,19 @@ public class TicketNotifier {
 		} catch (NoSuchElementException e1) {
 			return terminateWithError("NoNoNo, so nicht. Das sind ja ganz merkwürdige Sitze.", e1);
 		}
+	}
+	
+	private double calcCompletePrice(Set<CodeData> foundCodes) {
+		Double completePrice = 0.0;
+		
+		for (CodeData codeData : foundCodes) {
+			double price = codeData.getAdditionalCodeData().getDataAsDouble(ADDITIONAL_DATA.TICKET_PRICE);
+			if (price <= 0){
+				price = PropertyHandler.getInstance().getPropertyInt(PropertyHandler.PROP_TICKET_PRICE);
+			}
+			completePrice = completePrice + price;
+		}
+		return completePrice;
 	}
 
 	void sendNotificationMessage(String emailText, String recipient, String subject) throws EmailTransmissionException{

@@ -20,6 +20,7 @@ import the.dancing.company.ticketkatjuscha.ITicketProcessFailed;
 import the.dancing.company.ticketkatjuscha.TicketExpert;
 import the.dancing.company.ticketkatjuscha.TicketNotifier;
 import the.dancing.company.ticketkatjuscha.TicketPaymentHandler;
+import the.dancing.company.ticketkatjuscha.data.TicketOrdering;
 import the.dancing.company.ticketkatjuscha.util.ProcessFeedback;
 import the.dancing.company.ticketkatjuscha.util.SeatTokenizer;
 import the.dancing.company.ticketkatjuscha.util.Toolbox;
@@ -45,8 +46,10 @@ public class TicketRestService {
 				} catch (Exception e) {
 					//ignore, use default
 				}
+				
+				TicketOrdering ticketOrder = new TicketOrdering().addTicketOrder(amount, iPrice);
 
-				boolean ticketsGenerated = new TicketExpert(amount, name, SeatTokenizer.parseSeats(seats), recipient, iPrice).process(new ITicketProcessFailed() {
+				boolean ticketsGenerated = new TicketExpert(name, SeatTokenizer.parseSeats(seats), recipient, ticketOrder).process(new ITicketProcessFailed() {
 					@Override
 					public boolean handleFailedState(String message, Exception cause) {
 						appendExceptionToResponse(response, "Bigga bigga problem.\nMessage: " + message, cause);

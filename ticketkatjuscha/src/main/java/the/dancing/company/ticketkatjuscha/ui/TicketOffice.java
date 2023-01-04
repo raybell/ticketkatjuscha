@@ -13,9 +13,9 @@ import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.io.StringWriter;
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
@@ -49,6 +50,7 @@ import the.dancing.company.ticketkatjuscha.TicketNotifier;
 import the.dancing.company.ticketkatjuscha.TicketPaymentHandler;
 import the.dancing.company.ticketkatjuscha.data.AdditionalCodeData.ADDITIONAL_DATA;
 import the.dancing.company.ticketkatjuscha.data.CodeData;
+import the.dancing.company.ticketkatjuscha.data.TicketOrdering;
 import the.dancing.company.ticketkatjuscha.util.ProcessFeedback;
 import the.dancing.company.ticketkatjuscha.util.SeatTokenizer;
 import the.dancing.company.ticketkatjuscha.util.Toolbox;
@@ -86,29 +88,59 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 //		officePanel.add(filler500);
 //		officePanel.add(filler20);
 
-		JLabel lTicketAmount = new JLabel("Wieviel?");
-		officePanel.add(lTicketAmount);
-		JTextField tfTicketAmount = new JTextField(3);
-		officePanel.add(tfTicketAmount);
-
 		JLabel lTicketOwner = new JLabel("Für wen?");
 		officePanel.add(lTicketOwner);
-		JTextField tfTicketOwner = new JTextField(10);
+		JTextField tfTicketOwner = new JTextField(12);
 		officePanel.add(tfTicketOwner);
 
 		JLabel lTicketRecipient = new JLabel("Wohin?");
 		officePanel.add(lTicketRecipient);
-		JTextField tfTicketRecipient = new JTextField(13);
+		JTextField tfTicketRecipient = new JTextField(15);
 		officePanel.add(tfTicketRecipient);
 
-		officePanel.add(filler20);
-
-		JLabel lTicketPrice = new JLabel("Preis (leer für Standardpreis " + PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_PRICE) + "Euro)?");
-		officePanel.add(lTicketPrice);
-		JTextField tfTTicketPrice = new JTextField(7);
-		officePanel.add(tfTTicketPrice);
-
-		officePanel.add(filler20);
+		officePanel.add(filler50);
+		
+		JPanel ticketCat = new JPanel(new GridBagLayout());
+		ticketCat.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Ticketkategorien"));
+		
+		GridBagConstraints constraints = new GridBagConstraints();
+        constraints.anchor = GridBagConstraints.WEST;
+        constraints.insets = new Insets(1, 5, 1, 5);
+        constraints.gridx = 0;
+        constraints.gridy = 0;      
+		
+		JLabel lTicketAmount1 = new JLabel("Wieviel?");
+		ticketCat.add(lTicketAmount1, constraints);
+		
+		constraints.gridx = 1;
+		JTextField tfTicketAmount1 = new JTextField(3);
+		ticketCat.add(tfTicketAmount1, constraints);
+		
+		JLabel lTicketPrice1 = new JLabel("Preis (leer für Standardpreis " + PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_PRICE) + "Euro)?");
+		constraints.gridy = 1;
+		constraints.gridx = 0;
+		ticketCat.add(lTicketPrice1, constraints);
+		JTextField tfTTicketPrice1 = new JTextField(6);
+		constraints.gridx = 1;
+		ticketCat.add(tfTTicketPrice1, constraints);
+		
+		JLabel lTicketAmount2 = new JLabel("Wieviel?");
+		constraints.gridy = 2;
+		constraints.gridx = 0;
+		ticketCat.add(lTicketAmount2, constraints);
+		JTextField tfTicketAmount2 = new JTextField(3);
+		constraints.gridx = 1;
+		ticketCat.add(tfTicketAmount2, constraints);
+		
+		JLabel lTicketPrice2 = new JLabel("Preis (leer für Standardpreis " + PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_PRICE) + "Euro)?");
+		constraints.gridy = 3;
+		constraints.gridx = 0;
+		ticketCat.add(lTicketPrice2, constraints);
+		JTextField tfTTicketPrice2 = new JTextField(6);
+		constraints.gridx = 1;
+		ticketCat.add(tfTTicketPrice2, constraints);
+		
+		officePanel.add(ticketCat);
 
 		JPanel seatPanel = new JPanel();
 		seatPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 1, 1));
@@ -130,15 +162,13 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 		makeTickets.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				int ticketAmount;
-				if (!isFilled(tfTicketAmount)){
+				
+				TicketOrdering ticketOrdering = new TicketOrdering();
+				addTicketOrdering(ticketOrdering, tfTicketAmount1, tfTTicketPrice1);
+				addTicketOrdering(ticketOrdering, tfTicketAmount2, tfTTicketPrice2);
+				
+				if (ticketOrdering.getTicketAmountSumUp() <= 0) {
 					showErrorDialog("Wieviel, wieviel, sag mir wieviel willst du haben?");
-					return;
-				}
-				try {
-					ticketAmount = Integer.parseInt(tfTicketAmount.getText());
-				} catch (NumberFormatException e1) {
-					showErrorDialog("Ich glaub du willst mit mir spielen. Gib mir eine Zahl, nicht zu gross, nicht zu klein, irgendwas dazwischen.");
 					return;
 				}
 				List<Pair<String, String>> seats = null;
@@ -147,8 +177,8 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 						//check seats
 						try {
 							seats = SeatTokenizer.parseSeats(tfSeats.getText());
-							if (seats.size() != ticketAmount){
-								showErrorDialog("Es gibt nicht genug oder viel zu viele Plätze für deine Gäste. Wir brauchen " + ticketAmount + ", aber du willst mir " + seats.size() + " geben. Das geht so nicht.");
+							if (seats.size() != ticketOrdering.getTicketAmountSumUp()){
+								showErrorDialog("Es gibt nicht genug oder viel zu viele Plätze für deine Gäste. Wir brauchen " + ticketOrdering.getTicketAmountSumUp() + ", aber du willst mir " + seats.size() + " geben. Das geht so nicht.");
 								return;
 							}
 						} catch (NoSuchElementException e1) {
@@ -165,14 +195,7 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 					return;
 				}
 
-				int price = -1;
-				try {
-					price = Integer.parseInt(tfTTicketPrice.getText());
-				} catch (NumberFormatException e1) {
-					//ignore
-				}
-
-				TicketExpert theExpert = new TicketExpert(ticketAmount, tfTicketOwner.getText(), seats, tfTicketRecipient.getText(), price);
+				TicketExpert theExpert = new TicketExpert(tfTicketOwner.getText(), seats, tfTicketRecipient.getText(), ticketOrdering);
 				if (theExpert.process(new ITicketProcessFailed() {
 					@Override
 					public boolean handleFailedState(String message, Exception cause) {
@@ -351,10 +374,31 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 
 		updatePendingTicketsLabel(null);
 
-		setSize(520, 210);
+		setSize(520, 290);
 		setLocationRelativeTo(null);
 		setResizable(false);
 		setVisible(true);
+	}
+	
+	private static void addTicketOrdering(TicketOrdering ticketOrdering, JTextField ticketAmountField, JTextField ticketPriceField) {
+		int ticketAmount = 0;
+		double ticketPrice = -1;
+		
+		try {
+			ticketAmount = Integer.parseInt(ticketAmountField.getText());
+		} catch (NumberFormatException e1) {}
+		
+		if (ticketAmount > 0) {
+			try {
+				ticketPrice = NumberFormat.getInstance(Locale.GERMAN).parse(ticketPriceField.getText()).doubleValue();
+			} catch (ParseException e1) {}
+			
+			if (ticketPrice < 0) {
+				ticketPrice = PropertyHandler.getInstance().getPropertyInt(PropertyHandler.PROP_TICKET_PRICE);
+			}
+			
+			ticketOrdering.addTicketOrder(ticketAmount, ticketPrice);
+		}
 	}
 
 	private JPanel makeNotificationPanelWithWithFreeSeatSelection(JPanel filler50) {

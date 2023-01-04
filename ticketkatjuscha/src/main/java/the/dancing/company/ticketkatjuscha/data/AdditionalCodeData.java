@@ -1,5 +1,9 @@
 package the.dancing.company.ticketkatjuscha.data;
 
+import java.text.NumberFormat;
+import java.text.ParseException;
+import java.util.Locale;
+
 public class AdditionalCodeData {
 
 	//the order of the enums correlates with the position in data export file, so never change it (it's uniqueness by position)
@@ -42,6 +46,15 @@ public class AdditionalCodeData {
 		try {
 			return Integer.parseInt(data);
 		} catch (NumberFormatException e) {
+			return 0;
+		}
+	}
+	
+	public double getDataAsDouble(ADDITIONAL_DATA dataType){
+		String data = getData(dataType);
+		try {
+			return NumberFormat.getInstance(Locale.GERMAN).parse(data).doubleValue();
+		} catch (ParseException e) {
 			return 0;
 		}
 	}

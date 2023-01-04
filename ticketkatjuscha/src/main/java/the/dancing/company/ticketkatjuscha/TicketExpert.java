@@ -35,20 +35,21 @@ import the.dancing.company.ticketkatjuscha.EmailTemplate.TEMPLATES;
 import the.dancing.company.ticketkatjuscha.data.AdditionalCodeData.ADDITIONAL_DATA;
 import the.dancing.company.ticketkatjuscha.data.CodeData;
 import the.dancing.company.ticketkatjuscha.data.PaymentData;
+import the.dancing.company.ticketkatjuscha.data.TicketOrdering;
 import the.dancing.company.ticketkatjuscha.exceptions.EmailTransmissionException;
 import the.dancing.company.ticketkatjuscha.exceptions.GeneratorException;
 import the.dancing.company.ticketkatjuscha.ui.TicketOffice;
+import the.dancing.company.ticketkatjuscha.util.PriceFormatter;
 import the.dancing.company.ticketkatjuscha.util.ProcessFeedback;
 import the.dancing.company.ticketkatjuscha.util.SeatTokenizer;
 
 public class TicketExpert {
-	private int amountOfTickets;
 	private String ownerName;
 	private List<Pair<String, String>> seats;
 	private TicketGenerator ticketGenerator;
 	private String emailRecipient;
-	private int price;
 	private StringBuilder processWarnings;
+	private TicketOrdering ticketOrdering;
 
 	private static Options options = new Options();
 	static{
@@ -81,8 +82,10 @@ public class TicketExpert {
 				//cli mode
 				int ticketAmount = Integer.parseInt(cmd.getOptionValue("a"));
 				String ownerName = cmd.getOptionValue("n", "");
+				
+				TicketOrdering ticketOrdering = new TicketOrdering().addTicketOrder(ticketAmount, PropertyHandler.getInstance().getPropertyInt(PropertyHandler.PROP_TICKET_PRICE));
 
-				new TicketExpert(ticketAmount, ownerName, null, null, -1).process(new ITicketProcessFailed() {
+				new TicketExpert(ownerName, null, null, ticketOrdering).process(new ITicketProcessFailed() {
 					@Override
 					public boolean handleFailedState(String message, Exception cause) {
 						System.exit(2);
@@ -150,14 +153,13 @@ public class TicketExpert {
 				         .build();
 	}
 
-	public TicketExpert(int amountOfTickets, String ownerName, List<Pair<String, String>> seats, String recipient, int price){
-		this.amountOfTickets = amountOfTickets;
+	public TicketExpert(String ownerName, List<Pair<String, String>> seats, String recipient, TicketOrdering ticketOrdering){
+		this.ticketOrdering = ticketOrdering;
 		this.ownerName = ownerName;
 		this.seats = seats;
 		this.emailRecipient = recipient;
-		this.price = price >= 0 ? price : PropertyHandler.getInstance().getPropertyInt(PropertyHandler.PROP_TICKET_PRICE);
 		//check the seats
-		if (!PropertyHandler.getInstance().getPropertyBoolean(PropertyHandler.PROP_FREESEATSELECTION) && (seats == null || seats.size() != amountOfTickets)){
+		if (!PropertyHandler.getInstance().getPropertyBoolean(PropertyHandler.PROP_FREESEATSELECTION) && (seats == null || seats.size() != ticketOrdering.getTicketAmountSumUp())){
 			//seats does not fit amount of tickets
 			throw new IllegalArgumentException("Problääääm. Seats does not fit the ticket amount.");
 		}else {
@@ -187,7 +189,7 @@ public class TicketExpert {
 			}
 
 			//make new code
-			newCodes = codeGenerator.generateNewTicketCodes(this.seats, this.price, paymentData);
+			newCodes = codeGenerator.generateNewTicketCodes(this.seats, paymentData);
 		} catch (GeneratorException e) {
 			return terminateWithError("Problääääm. Could not generate new ticket codes.", e, false, failHandler);
 		}
@@ -219,7 +221,7 @@ public class TicketExpert {
 				CodeData newCodeData = newCodes.get(newCode);
 				this.ticketGenerator.generate(newCode, newCodeData.getCheckCode(), newCodeData.getName(),
 											 !PropertyHandler.getInstance().getPropertyBoolean(PropertyHandler.PROP_FREESEATSELECTION) ? SeatTokenizer.parseSeats(newCodeData.getAdditionalCodeData().getData(ADDITIONAL_DATA.TICKET_SEAT)).get(0) : null,
-						                     newCodeData.getAdditionalCodeData().getDataAsInt(ADDITIONAL_DATA.TICKET_PRICE),
+						                     newCodeData.getAdditionalCodeData().getDataAsDouble(ADDITIONAL_DATA.TICKET_PRICE),
 						                     outputStream);
 			} catch (IOException e) {
 				return terminateWithError("Problääääm. Seems the ticket generator did not find the right byte code sequence.", e, true, failHandler);
@@ -290,8 +292,8 @@ public class TicketExpert {
 		//generate email
 		logWriter.println("Sending email notification...");
 		try {
-			String emailText = EmailTemplate.loadTemplate(this.price == 0 ? TEMPLATES.FREE_TICKET_TEMPLATE : TEMPLATES.TICKET_TEMPLATE)
-					                        .evaluateEmailText(ownerName, null, amountOfTickets * this.price, paymentData.getBookingNumber());
+			String emailText = EmailTemplate.loadTemplate(ticketOrdering.getTicketPriceSumUp() == 0 ? TEMPLATES.FREE_TICKET_TEMPLATE : TEMPLATES.TICKET_TEMPLATE)
+					                        .evaluateEmailText(ownerName, null, ticketOrdering.getTicketPriceSumUp(), paymentData.getBookingNumber());
 			EmailTransmitter.transmitEmail(emailText, ticketFiles, emailRecipient, PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_EMAIL_TEMPLATE_SUBJECT));
 		} catch (IOException | EmailTransmissionException e) {
 			makeProcessingWarning(logWriter, "Could not send the email notification: " + e.getMessage(), e);
@@ -315,8 +317,7 @@ public class TicketExpert {
 		paymentData.setBookingNumber(sdfBookingNr.format(currentTime.getTime()));
 		paymentData.setCustomerName(this.ownerName);
 		paymentData.setCustomerEmail(this.emailRecipient);
-		paymentData.setNumberOfTickets(amountOfTickets);
-		paymentData.setOrderPrice(this.price * amountOfTickets);
+		paymentData.setTicketOrdering(ticketOrdering);
 		paymentData.setOrderDate(currentTime.getTime());
 		return paymentData;
 	}
