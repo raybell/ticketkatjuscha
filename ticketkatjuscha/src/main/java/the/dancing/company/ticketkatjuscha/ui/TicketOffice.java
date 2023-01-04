@@ -109,14 +109,14 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
         constraints.gridx = 0;
         constraints.gridy = 0;      
 		
-		JLabel lTicketAmount1 = new JLabel("Wieviel?");
+		JLabel lTicketAmount1 = new JLabel("Cat1 - Wieviel?");
 		ticketCat.add(lTicketAmount1, constraints);
 		
 		constraints.gridx = 1;
 		JTextField tfTicketAmount1 = new JTextField(3);
 		ticketCat.add(tfTicketAmount1, constraints);
 		
-		JLabel lTicketPrice1 = new JLabel("Preis (leer für Standardpreis " + PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_PRICE) + "Euro)?");
+		JLabel lTicketPrice1 = new JLabel("Cat1 - Preis (leer für Standardpreis " + PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_PRICE) + "Euro)?");
 		constraints.gridy = 1;
 		constraints.gridx = 0;
 		ticketCat.add(lTicketPrice1, constraints);
@@ -124,7 +124,7 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 		constraints.gridx = 1;
 		ticketCat.add(tfTTicketPrice1, constraints);
 		
-		JLabel lTicketAmount2 = new JLabel("Wieviel?");
+		JLabel lTicketAmount2 = new JLabel("Cat2 - Wieviel?");
 		constraints.gridy = 2;
 		constraints.gridx = 0;
 		ticketCat.add(lTicketAmount2, constraints);
@@ -132,7 +132,7 @@ public class TicketOffice extends JFrame implements IToggleFieldParent{
 		constraints.gridx = 1;
 		ticketCat.add(tfTicketAmount2, constraints);
 		
-		JLabel lTicketPrice2 = new JLabel("Preis (leer für Standardpreis " + PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_PRICE) + "Euro)?");
+		JLabel lTicketPrice2 = new JLabel("Cat2 - Preis (leer für Standardpreis " + PropertyHandler.getInstance().getPropertyString(PropertyHandler.PROP_TICKET_PRICE) + "Euro)?");
 		constraints.gridy = 3;
 		constraints.gridx = 0;
 		ticketCat.add(lTicketPrice2, constraints);
